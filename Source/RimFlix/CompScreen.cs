@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using RimWorld;
+using System.Collections.Generic;
 using System.Linq;
-using Verse;
-using RimWorld;
 using UnityEngine;
+using Verse;
 
 namespace RimFlix
 {
@@ -11,18 +11,22 @@ namespace RimFlix
     {
         // RimFlix settings
         private RimFlixSettings settings;
+
         private double screenUpdateTime;
         private double showUpdateTime;
 
         // Current show info
         private int showIndex = 0;
+
         private int showTicks = 0;
         private int frameIndex = 0;
         private int frameTicks = 0;
 
         // Current frame graphic
         private bool frameDirty = true;
+
         private Graphic frameGraphic;
+
         private Graphic FrameGraphic
         {
             get
@@ -35,7 +39,7 @@ namespace RimFlix
                 {
                     Graphic graphic = this.Show.frames[this.frameIndex % this.Show.frames.Count].Graphic;
                     Vector2 frameSize = GetSize(graphic);
-                    this.frameGraphic = graphic.GetCopy(frameSize);
+                    this.frameGraphic = graphic.GetCopy(frameSize, null);
                     this.screenUpdateTime = RimFlixSettings.screenUpdateTime;
                     this.frameDirty = false;
                 }
@@ -45,6 +49,7 @@ namespace RimFlix
 
         // Available shows for this television
         private List<ShowDef> shows;
+
         public List<ShowDef> Shows
         {
             get
@@ -63,7 +68,9 @@ namespace RimFlix
         }
 
         private string showDefName;
+
         private ShowDef show;
+
         private ShowDef Show
         {
             get
@@ -83,6 +90,7 @@ namespace RimFlix
 
         // Power consumption tweaks
         private CompPowerTrader compPowerTrader;
+
         private float powerOutputOn;
         private float powerOutputOff;
 
@@ -116,7 +124,6 @@ namespace RimFlix
             }
         }
 
-        // Use Show.defName instead of Show in case user deletes show midgame
         private void ResolveShowDefName()
         {
             if (this.showDefName == null)
@@ -129,7 +136,6 @@ namespace RimFlix
                 this.showIndex = i;
             }
         }
-
 
         private Vector2 GetSize(Graphic frame)
         {
@@ -146,6 +152,11 @@ namespace RimFlix
             {
                 screenScale = RimFlixSettings.MegaScale;
             }
+            else if (this.parent.def == ThingDef.Named("UltrascreenTV"))
+            {
+                screenScale = RimFlixSettings.UltraScale;
+            }
+
             Vector2 screenSize = Vector2.Scale(screenScale, this.parent.Graphic.drawSize);
             Vector2 frameSize = new Vector2(frame.MatSingle.mainTexture.width, frame.MatSingle.mainTexture.height);
             bool isWide = (frameSize.x / screenSize.x > frameSize.y / screenSize.y);
@@ -174,8 +185,7 @@ namespace RimFlix
 
         private Vector3 GetOffset(ThingDef def)
         {
-            // Altitude layers are 0.046875f
-            // For more info refer to `Verse.Altitudes` and `Verse.SectionLayer`
+            // Altitude layers are 0.046875f For more info refer to `Verse.Altitudes` and `Verse.SectionLayer`
             float y = 0.0234375f;
             if (def == ThingDef.Named("TubeTelevision"))
             {
@@ -189,6 +199,11 @@ namespace RimFlix
             {
                 return new Vector3(RimFlixSettings.MegaOffset.x, y, -1f * RimFlixSettings.MegaOffset.y);
             }
+            if (def == ThingDef.Named("UltrascreenTV"))
+            {
+                return new Vector3(RimFlixSettings.UltraOffset.x, y, -1f * RimFlixSettings.UltraOffset.y);
+            }
+
             return new Vector3(0, 0, 0);
         }
 
@@ -232,8 +247,8 @@ namespace RimFlix
             this.ChangeShow(this.Shows.IndexOf(s));
         }
 
-        // Process show and frame ticks
-        // Should only be called when tv is playing (show exists and has frames)
+        // Process show and frame ticks Should only be called when tv is playing (show exists and
+        // has frames)
         private void RunShow()
         {
             if (this.SleepTimer > 0 && this.AllowPawn && ++this.showTicks > this.settings.SecondsBetweenShows.SecondsToTicks())
@@ -297,7 +312,8 @@ namespace RimFlix
                     defaultLabel = "RimFlix_AllowPawnLabel".Translate(),
                     defaultDesc = "RimFlix_AllowPawnDesc".Translate(),
                     isActive = () => AllowPawn,
-                    toggleAction = delegate {
+                    toggleAction = delegate
+                    {
                         this.AllowPawn = !this.AllowPawn;
                     }
                 };
@@ -319,7 +335,8 @@ namespace RimFlix
                     activateSound = SoundDefOf.Click,
                     defaultLabel = "RimFlix_NextShowLabel".Translate(),
                     defaultDesc = "RimFlix_NextShowDesc".Translate(),
-                    action = delegate {
+                    action = delegate
+                    {
                         ChangeShow((this.showIndex + 1) % this.Shows.Count);
                     }
                 };
@@ -331,7 +348,6 @@ namespace RimFlix
         public override void PostExposeData()
         {
             base.PostExposeData();
-            //Scribe_Defs.Look(ref this.show, "RimFlix_Show");
             Scribe_Values.Look(ref this.showDefName, "RimFlix_ShowDefName");
             Scribe_Values.Look(ref this.frameIndex, "RimFlix_FrameIndex", 0);
             Scribe_Values.Look(ref this.showTicks, "RimFlix_ShowTicks", 0);

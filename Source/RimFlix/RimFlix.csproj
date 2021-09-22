@@ -27,7 +27,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\v1.3\Assemblies\</OutputPath>
+    <OutputPath>D:\Rimworld 1.3\Mods\Rimflix\v1.3\Assemblies\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -76,6 +76,7 @@
     <Compile Include="Dialog_AdjustScreen.cs" />
     <Compile Include="Dialog_Preview.cs" />
     <Compile Include="Dialog_SelectShow.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="JobDriver_WatchRimFlix.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RimFlixMod.cs" />
@@ -83,6 +84,9 @@
     <Compile Include="ShowDef.cs" />
     <Compile Include="UserContent.cs" />
     <Compile Include="UserShowDef.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".editorconfig" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

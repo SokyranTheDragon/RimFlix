@@ -1,15 +1,15 @@
 ﻿using System;
-using System.IO;
-using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
 
 namespace RimFlix
 {
-    class Dialog_AddShow : Window
+    internal class Dialog_AddShow : Window
     {
         private readonly RimFlixSettings settings;
         private readonly RimFlixMod mod;
@@ -17,6 +17,7 @@ namespace RimFlix
 
         // Widget sizes
         private readonly float padding = 8;
+
         private readonly float scrollBarWidth = 16;
         private readonly float drivesWidth = 80;
         private readonly float filesWidth = 370;
@@ -28,6 +29,7 @@ namespace RimFlix
 
         // File explorer panel
         private readonly string[] drives;
+
         private string currentPath;
         private string lastPath = "";
         private readonly Regex pathValidator;
@@ -44,11 +46,13 @@ namespace RimFlix
 
         // Make abnormally large directories manageable
         private int fileCount = 0;
+
         private int dirCount = 0;
         private readonly int maxFileCount = 500;
 
         // Options panel
         private int framesCount;
+
         private string showName;
         private float timeValue;
         private TimeUnit timeUnit = TimeUnit.Second;
@@ -57,6 +61,7 @@ namespace RimFlix
         private bool playTube;
         private bool playFlat;
         private bool playMega;
+        private bool playUltra;
 
         public Dialog_AddShow(UserShowDef userShow = null, RimFlixMod mod = null)
         {
@@ -105,6 +110,7 @@ namespace RimFlix
                 this.playTube = userShow.televisionDefStrings.Contains("TubeTelevision");
                 this.playFlat = userShow.televisionDefStrings.Contains("FlatscreenTelevision");
                 this.playMega = userShow.televisionDefStrings.Contains("MegascreenTelevision");
+                this.playUltra = userShow.televisionDefStrings.Contains("UltrascreenTV");
             }
             else
             {
@@ -114,6 +120,7 @@ namespace RimFlix
                 this.playTube = false;
                 this.playFlat = false;
                 this.playMega = false;
+                this.playUltra = false;
             }
             this.currentUserShow = userShow;
             this.mod = mod;
@@ -156,10 +163,10 @@ namespace RimFlix
                 this.dirInfoDirty = true;
                 this.soundAppear.PlayOneShotOnCamera(null);
             }
-            // Using Color.gray for button changes default GUI color, so we need to change it back to white
+            // Using Color.gray for button changes default GUI color, so we need to change it back
+            // to white
             GUI.color = Color.white;
             currentPath = Widgets.TextField(rightRect.LeftPartPixels(rightRect.width - refreshRect.width - this.padding), currentPath, int.MaxValue, this.pathValidator);
-
         }
 
         private void DoDrives(Rect rect)
@@ -307,7 +314,7 @@ namespace RimFlix
             if (this.fileCount > this.maxFileCount)
             {
                 // Too many files to display
-                Widgets.Label(new Rect(rectView.x, rectView.y + buttonHeight, rectView.width + this.scrollBarWidth, buttonHeight), 
+                Widgets.Label(new Rect(rectView.x, rectView.y + buttonHeight, rectView.width + this.scrollBarWidth, buttonHeight),
                     $"Too many files to display ({this.fileCount} files, max {this.maxFileCount})");
             }
             else
@@ -393,13 +400,15 @@ namespace RimFlix
             Rect rectMega = new Rect(checkX, y, checkWidth, Text.LineHeight);
             Widgets.DrawHighlightIfMouseover(rectMega);
             Widgets.CheckboxLabeled(rectMega, ThingDef.Named("MegascreenTelevision").LabelCap, ref this.playMega);
+            y += Text.LineHeight;               //y += Text.LineHeight + this.padding * 4;
+            Rect rectUltra = new Rect(checkX, y, checkWidth, Text.LineHeight);
+            Widgets.DrawHighlightIfMouseover(rectUltra);
+            Widgets.CheckboxLabeled(rectUltra, ThingDef.Named("UltrascreenTV").LabelCap, ref this.playUltra);
             y += Text.LineHeight + this.padding * 4;
-
             // Note
             GUI.color = Color.gray;
             Widgets.Label(new Rect(x, y, width, Text.LineHeight * 3), "RimFlix_Note01".Translate());
             GUI.color = Color.white;
-
         }
 
         private void DoButtons(Rect rect)
@@ -456,7 +465,7 @@ namespace RimFlix
             }
 
             // Check if at least one television type is selected
-            if (!(this.playTube || this.playFlat || this.playMega))
+            if (!(this.playTube || this.playFlat || this.playMega || this.playUltra))
             {
                 Find.WindowStack.Add(new Dialog_MessageBox("RimFlix_NoTelevisionType".Translate()));
                 return false;
@@ -481,7 +490,13 @@ namespace RimFlix
             {
                 userShow.televisionDefStrings.Add("MegascreenTelevision");
             }
-
+            if (Verse.ModLister.GetActiveModWithIdentifier("VanillaExpanded.VFESpacer") != null)
+            {
+                if (this.playUltra)
+                {
+                    userShow.televisionDefStrings.Add("UltrascreenTV");
+                }
+            }
             // Load show assets and add to def database
             if (!UserContent.LoadUserShow(userShow))
             {

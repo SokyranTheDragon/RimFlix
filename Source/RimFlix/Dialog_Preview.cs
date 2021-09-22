@@ -4,7 +4,7 @@ using Verse;
 
 namespace RimFlix
 {
-    class Dialog_Preview : Window
+    internal class Dialog_Preview : Window
     {
         private readonly float padding = 12;
         private readonly float headerHeight = 40;
@@ -17,10 +17,12 @@ namespace RimFlix
         private readonly Texture tubeTex;
         private readonly Texture flatTex;
         private readonly Texture megaTex;
+        private readonly Texture ultraTex;
 
         private Vector3 tubeVec;
         private Vector3 flatVec;
         private Vector3 megaVec;
+        private Vector3 ultraVec;
 
         private readonly RimFlixSettings settings;
 
@@ -38,10 +40,12 @@ namespace RimFlix
             this.tubeTex = ThingDef.Named("TubeTelevision").graphic.MatSouth.mainTexture;
             this.flatTex = ThingDef.Named("FlatscreenTelevision").graphic.MatSouth.mainTexture;
             this.megaTex = ThingDef.Named("MegascreenTelevision").graphic.MatSouth.mainTexture;
+            this.ultraTex = ThingDef.Named("UltrascreenTV").graphic.MatSouth.mainTexture;
 
             this.tubeVec = ThingDef.Named("TubeTelevision").graphicData.drawSize;
             this.flatVec = ThingDef.Named("FlatscreenTelevision").graphicData.drawSize;
             this.megaVec = ThingDef.Named("MegascreenTelevision").graphicData.drawSize;
+            this.ultraVec = ThingDef.Named("UltrascreenTV").graphicData.drawSize;
 
             this.settings = LoadedModManager.GetMod<RimFlixMod>().GetSettings<RimFlixSettings>();
         }
@@ -76,23 +80,36 @@ namespace RimFlix
             Rect flatRect = new Rect(x, y, this.texDim * flatVec.x, this.texDim * flatVec.y);
             x += flatRect.width + this.padding * 2;
             Rect megaRect = new Rect(x, y, this.texDim * megaVec.x, this.texDim * megaVec.y);
+            x += megaRect.width + this.padding * 2;
+            Rect ultraRect = new Rect(x, y, this.texDim * ultraVec.x, this.texDim * ultraVec.y);
+            //x += ultraRect.width + this.padding * 2;
 
             GUI.DrawTexture(tubeRect, this.tubeTex);
             GUI.DrawTexture(flatRect, this.flatTex);
             GUI.DrawTexture(megaRect, this.megaTex);
-
+            GUI.DrawTexture(ultraRect, this.ultraTex);
             // Overlay textures
-            Rect tubeFrame = new Rect(tubeRect.position, GetSize(this.tubeVec, RimFlixSettings.TubeScale));
-            tubeFrame.center = tubeRect.center + this.texDim * RimFlixSettings.TubeOffset;
-            Rect flatFrame = new Rect(flatRect.position, GetSize(this.flatVec, RimFlixSettings.FlatScale));
-            flatFrame.center = flatRect.center + this.texDim * RimFlixSettings.FlatOffset;
-            Rect megaFrame = new Rect(megaRect.position, GetSize(this.megaVec, RimFlixSettings.MegaScale));
-            megaFrame.center = megaRect.center + this.texDim * RimFlixSettings.MegaOffset;
+            Rect tubeFrame = new Rect(tubeRect.position, GetSize(this.tubeVec, RimFlixSettings.TubeScale))
+            {
+                center = tubeRect.center + this.texDim * RimFlixSettings.TubeOffset
+            };
+            Rect flatFrame = new Rect(flatRect.position, GetSize(this.flatVec, RimFlixSettings.FlatScale))
+            {
+                center = flatRect.center + this.texDim * RimFlixSettings.FlatOffset
+            };
+            Rect megaFrame = new Rect(megaRect.position, GetSize(this.megaVec, RimFlixSettings.MegaScale))
+            {
+                center = megaRect.center + this.texDim * RimFlixSettings.MegaOffset
+            };
+            Rect ultraFrame = new Rect(ultraRect.position, GetSize(this.ultraVec, RimFlixSettings.UltraScale))
+            {
+                center = ultraRect.center + this.texDim * RimFlixSettings.UltraOffset
+            };
 
             GUI.DrawTexture(tubeFrame, this.frameTex);
             GUI.DrawTexture(flatFrame, this.frameTex);
             GUI.DrawTexture(megaFrame, this.frameTex);
-
+            GUI.DrawTexture(ultraFrame, this.frameTex);
             // Draw borders on mouseover
             if (Mouse.IsOver(tubeRect))
             {
@@ -105,6 +122,10 @@ namespace RimFlix
             if (Mouse.IsOver(megaRect))
             {
                 Widgets.DrawBox(megaFrame);
+            }
+            if (Mouse.IsOver(ultraRect))
+            {
+                Widgets.DrawBox(ultraFrame);
             }
         }
 

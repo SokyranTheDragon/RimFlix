@@ -1,7 +1,7 @@
-﻿using UnityEngine;
+﻿using RimWorld;
+using UnityEngine;
 using Verse;
 using Verse.Sound;
-using RimWorld;
 
 namespace RimFlix
 {
@@ -61,6 +61,5 @@ namespace RimFlix
                 Widgets.EndScrollView();
             }
         }
-
     }
 }

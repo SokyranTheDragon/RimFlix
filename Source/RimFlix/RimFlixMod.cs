@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Verse;
 using UnityEngine;
+using Verse;
 
 namespace RimFlix
 {
@@ -10,6 +10,7 @@ namespace RimFlix
     {
         private readonly RimFlixSettings settings;
         private List<ShowDef> shows = new List<ShowDef>();
+
         private List<ShowDef> Shows
         {
             get
@@ -36,14 +37,17 @@ namespace RimFlix
                 return shows;
             }
         }
+
         public double ShowUpdateTime = 0;
 
         private readonly Dictionary<string, int> showCounts = new Dictionary<string, int>()
         {
             { "TubeTelevision", 0 },
             { "FlatscreenTelevision", 0 },
-            { "MegascreenTelevision", 0 }
+            { "MegascreenTelevision", 0 },
+            { "UltrascreenTV", 0 }
         };
+
         private Dictionary<string, int> ShowCounts
         {
             get
@@ -59,9 +63,11 @@ namespace RimFlix
                 return this.showCounts;
             }
         }
+
         private bool showCountsDirty = true;
 
         private List<FloatMenuOption> drawTypeMenu;
+
         public List<FloatMenuOption> DrawTypeMenu
         {
             get
@@ -89,7 +95,9 @@ namespace RimFlix
                 return this.drawTypeMenu;
             }
         }
+
         private string[] drawTypeNames;
+
         public string[] DrawTypeNames
         {
             get
@@ -109,6 +117,7 @@ namespace RimFlix
 
         // We need to delay loading textures until game has fully loaded
         private Texture tubeTex;
+
         private Texture TubeTex
         {
             get
@@ -120,7 +129,9 @@ namespace RimFlix
                 return tubeTex;
             }
         }
+
         private Texture frameTex;
+
         private Texture FlatTex
         {
             get
@@ -132,7 +143,9 @@ namespace RimFlix
                 return frameTex;
             }
         }
+
         private Texture megaTex;
+
         private Texture MegaTex
         {
             get
@@ -145,7 +158,22 @@ namespace RimFlix
             }
         }
 
+        private Texture ultraTex;
+
+        private Texture UltraTex
+        {
+            get
+            {
+                if (ultraTex == null)
+                {
+                    ultraTex = ThingDef.Named("UltrascreenTV").graphic.MatSouth.mainTexture;
+                }
+                return ultraTex;
+            }
+        }
+
         private Texture disabledTex;
+
         private Texture DisabledTex
         {
             get
@@ -157,10 +185,12 @@ namespace RimFlix
                 return disabledTex;
             }
         }
+
         private Color disabledTextColor = new Color(0.616f, 0.443f, 0.451f);
         private Color disabledLineColor = new Color(0.616f, 0.443f, 0.451f, 0.3f);
 
         private Texture2D adjustTex;
+
         private Texture2D AdjustTex
         {
             get
@@ -277,8 +307,8 @@ namespace RimFlix
 
             Text.Font = GameFont.Small;
             float labelWidth = 200;
-            float padding = 4f;
-            Rect tableRect = new Rect(rect.x, rect.y + headerRect.height, rect.width, (Text.LineHeight + padding) * 3);
+            float padding = 2f;
+            Rect tableRect = new Rect(rect.x, rect.y + headerRect.height, rect.width, (Text.LineHeight + padding) * 4);
             GUI.BeginGroup(tableRect);
             {
                 Rect labelRect = new Rect(0, 0, labelWidth, Text.LineHeight);
@@ -310,14 +340,15 @@ namespace RimFlix
             // 864 x 418
             float cellHeight = Text.LineHeight;
             float cellPadding = 2;
-            float nameWidth = 434;
+            float nameWidth = 400;
             float framesWidth = 80;
             float timeWidth = 80;
             float tubeWidth = 40;
             float flatWidth = 40;
             float megaWidth = 40;
-            float editWidth = 60;
-            float deleteWidth = 60;
+            float ultraWidth = 40;
+            float editWidth = 50;
+            float deleteWidth = 50;
 
             // Header row
             GUI.skin.GetStyle("Label").alignment = TextAnchor.MiddleCenter;
@@ -385,6 +416,16 @@ namespace RimFlix
             }
             x += megaWidth + cellPadding;
 
+            Rect ultraRect = new Rect(x, y, ultraWidth, cellHeight);
+            Widgets.DrawTextureFitted(ultraRect, this.UltraTex, 0.75f);
+            TooltipHandler.TipRegion(ultraRect, ThingDef.Named("UltrascreenTV").LabelCap);
+            if (GUI.Button(ultraRect, "", GUI.skin.GetStyle("Label")))
+            {
+                this.sortType = SortType.Ultra;
+                this.shows = GetSortedShows(true);
+            }
+            x += ultraWidth + cellPadding;
+
             Rect actionRect = new Rect(x, y, editWidth + deleteWidth + cellPadding, cellHeight);
             //Widgets.Label(actionRect, "RimFlix_ActionsHeader".Translate());
             if (GUI.Button(actionRect, "RimFlix_ActionsHeader".Translate(), GUI.skin.GetStyle("Label")))
@@ -407,7 +448,7 @@ namespace RimFlix
             int index = 0;
             foreach (ShowDef show in this.Shows)
             {
-                rowRect.y = nameRect.y = framesRect.y = timeRect.y = tubeRect.y = flatRect.y = megaRect.y = actionRect.y = editRect.y = deleteRect.y = y + (cellHeight + cellPadding) * index++;
+                rowRect.y = nameRect.y = framesRect.y = timeRect.y = tubeRect.y = flatRect.y = megaRect.y = ultraRect.y = actionRect.y = editRect.y = deleteRect.y = y + (cellHeight + cellPadding) * index++;
 
                 if (index % 2 == 1)
                 {
@@ -418,6 +459,7 @@ namespace RimFlix
                     Widgets.DrawAltRect(tubeRect);
                     Widgets.DrawAltRect(flatRect);
                     Widgets.DrawAltRect(megaRect);
+                    Widgets.DrawAltRect(ultraRect);
                     Widgets.DrawAltRect(editRect);
                     Widgets.DrawAltRect(deleteRect);
                 }
@@ -457,6 +499,13 @@ namespace RimFlix
                     TooltipHandler.TipRegion(megaRect, ThingDef.Named("MegascreenTelevision").LabelCap);
                 }
 
+                TooltipHandler.TipRegion(ultraRect, ThingDef.Named("UltrascreenTV").LabelCap);
+                if (show.televisionDefs.Contains(ThingDef.Named("UltrascreenTV")))
+                {
+                    Widgets.DrawTextureFitted(ultraRect, this.UltraTex, 1f);
+                    TooltipHandler.TipRegion(ultraRect, ThingDef.Named("UltrascreenTV").LabelCap);
+                }
+
                 GUI.color = Color.white;
                 if (show is UserShowDef userShow)
                 {
@@ -481,7 +530,8 @@ namespace RimFlix
                         {
                             show.disabled = false;
                             this.settings.DisabledShows.Remove(show.defName);
-                            // We want to alert CompScreen of show update, but avoid messing up sort order by requerying here
+                            // We want to alert CompScreen of show update, but avoid messing up sort
+                            // order by requerying here
                             this.ShowUpdateTime = RimFlixSettings.showUpdateTime = RimFlixSettings.TotalSeconds;
                         }
                     }
@@ -491,7 +541,8 @@ namespace RimFlix
                         {
                             show.disabled = true;
                             this.settings.DisabledShows.Add(show.defName);
-                            // We want to alert CompScreen of show update, but avoid messing up sort order by requerying here
+                            // We want to alert CompScreen of show update, but avoid messing up sort
+                            // order by requerying here
                             this.ShowUpdateTime = RimFlixSettings.showUpdateTime = RimFlixSettings.TotalSeconds;
                         }
                     }
@@ -516,7 +567,7 @@ namespace RimFlix
             float optionsWidth = 500f;
             float statusWidth = 250f;
             float optionsHeight = 150f;
-            float showsHeight = 418f;
+            float showsHeight = 400f;
 
             // Adjust screen button
             Text.Font = GameFont.Medium;
@@ -591,6 +642,14 @@ namespace RimFlix
                     ? this.shows.OrderBy(s => s.televisionDefs.Contains(ThingDef.Named("MegascreenTelevision"))).ToList()
                     : this.shows.OrderByDescending(s => s.televisionDefs.Contains(ThingDef.Named("MegascreenTelevision"))).ToList();
             }
+
+            if (this.sortType == SortType.Ultra)
+            {
+                return this.sortAsc[i]
+                    ? this.shows.OrderBy(s => s.televisionDefs.Contains(ThingDef.Named("UltrascreenTV"))).ToList()
+                    : this.shows.OrderByDescending(s => s.televisionDefs.Contains(ThingDef.Named("UltrascreenTV"))).ToList();
+            }
+
             if (this.sortType == SortType.Action)
             {
                 return this.sortAsc[i]
@@ -610,6 +669,7 @@ namespace RimFlix
         Tube,
         Flat,
         Mega,
+        Ultra,
         Action
     }
 

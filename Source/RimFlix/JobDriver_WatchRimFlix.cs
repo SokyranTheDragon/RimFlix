@@ -1,13 +1,13 @@
-﻿using Verse;
-using RimWorld;
+﻿using RimWorld;
+using Verse;
 
 namespace RimFlix
 {
-    class JobDriver_WatchRimFlix : JobDriver_WatchTelevision
-    {        
+    internal class JobDriver_WatchRimFlix : JobDriver_WatchTelevision
+    {
         protected override void WatchTickAction()
         {
-            Building thing = (Building) base.TargetA.Thing;
+            Building thing = (Building)base.TargetA.Thing;
 
             RimFlix.CompScreen screen = thing.TryGetComp<RimFlix.CompScreen>();
             if (screen != null)

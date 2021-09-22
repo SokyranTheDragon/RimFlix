@@ -1,11 +1,11 @@
-﻿using System;
+﻿using RimWorld.IO;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Verse;
-using UnityEngine;
 using System.Text;
-using RimWorld.IO;
+using UnityEngine;
+using Verse;
 
 namespace RimFlix
 {
@@ -50,7 +50,7 @@ namespace RimFlix
             IEnumerable<ShowDef> shows = DefDatabase<ShowDef>.AllDefs;
             foreach (ShowDef show in shows)
             {
-                show.disabled = settings.DisabledShows == null ? false : settings.DisabledShows.Contains(show.defName);
+                show.disabled = settings.DisabledShows != null && settings.DisabledShows.Contains(show.defName);
             }
         }
 
@@ -111,8 +111,8 @@ namespace RimFlix
             userShow.frames = new List<GraphicData>();
             foreach (string filePath in filePaths)
             {
-                // RimWorld sets internalPath to filePath without extension
-                // This causes problems with files that have same name but different extension (file.jpg, file.png)
+                // RimWorld sets internalPath to filePath without extension This causes problems
+                // with files that have same name but different extension (file.jpg, file.png)
                 string internalPath = filePath.Replace('\\', '/');
                 if (!RimFlixContent.contentList.ContainsKey(internalPath))
                 {
@@ -191,13 +191,10 @@ namespace RimFlix
 
         public static string GetUniqueId()
         {
-            // 31,536,000 seconds in a year
-            // 10 digit number string allows ids to remain sorted for ~300 years
+            // 31,536,000 seconds in a year 10 digit number string allows ids to remain sorted for
+            // ~300 years
             string diffStr = Math.Floor(RimFlixSettings.TotalSeconds).ToString();
             return $"UserShow_{diffStr.PadLeft(10, '0')}";
         }
-
-
     }
-
 }
