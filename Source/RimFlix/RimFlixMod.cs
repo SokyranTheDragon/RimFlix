@@ -8,7 +8,7 @@ namespace RimFlix
 {
     public class RimFlixMod : Mod
     {
-        private readonly RimFlixSettings settings;
+        private RimFlixSettings settings;
         private List<ShowDef> shows = new List<ShowDef>();
 
         private List<ShowDef> Shows
@@ -40,7 +40,7 @@ namespace RimFlix
 
         public double ShowUpdateTime = 0;
 
-        private readonly Dictionary<string, int> showCounts = new Dictionary<string, int>()
+        private Dictionary<string, int> showCounts = new Dictionary<string, int>()
         {
             { "TubeTelevision", 0 },
             { "FlatscreenTelevision", 0 },
@@ -84,12 +84,11 @@ namespace RimFlix
                             this.settings.DrawType = DrawType.Fit;
                             RimFlixSettings.screenUpdateTime = RimFlixSettings.TotalSeconds;
                         }),
-                        /*
+
                         new FloatMenuOption("RimFlix_DrawTypeFill".Translate(), delegate {
                             this.settings.DrawType = DrawType.Fill;
-                            RimFlixSettings.lastUpdateTick = GenTicks.TicksAbs;
+                            RimFlixSettings.screenUpdateTime = RimFlixSettings.TotalSeconds;
                         })
-                        */
                     };
                 }
                 return this.drawTypeMenu;
@@ -204,10 +203,10 @@ namespace RimFlix
         }
 
         private Vector2 scrollPos = Vector2.zero;
-        private readonly float scrollBarWidth = 16f;
+        private float scrollBarWidth = 16f;
 
         private SortType sortType = SortType.None;
-        private readonly bool[] sortAsc = new bool[Enum.GetNames(typeof(SortType)).Length];
+        private bool[] sortAsc = new bool[Enum.GetNames(typeof(SortType)).Length];
 
         public RimFlixMod(ModContentPack content) : base(content)
         {
@@ -348,7 +347,7 @@ namespace RimFlix
             float megaWidth = 40;
             float ultraWidth = 40;
             float editWidth = 50;
-            float deleteWidth = 50;
+            float deleteWidth = 60;
 
             // Header row
             GUI.skin.GetStyle("Label").alignment = TextAnchor.MiddleCenter;
@@ -481,7 +480,7 @@ namespace RimFlix
                 TooltipHandler.TipRegion(tubeRect, ThingDef.Named("TubeTelevision").LabelCap);
                 if (show.televisionDefs.Contains(ThingDef.Named("TubeTelevision")))
                 {
-                    Widgets.DrawTextureFitted(tubeRect, this.TubeTex, 0.6f);
+                    Widgets.DrawTextureFitted(tubeRect, this.TubeTex, 0.7f);
                     TooltipHandler.TipRegion(tubeRect, ThingDef.Named("TubeTelevision").LabelCap);
                 }
 
@@ -502,7 +501,7 @@ namespace RimFlix
                 TooltipHandler.TipRegion(ultraRect, ThingDef.Named("UltrascreenTV").LabelCap);
                 if (show.televisionDefs.Contains(ThingDef.Named("UltrascreenTV")))
                 {
-                    Widgets.DrawTextureFitted(ultraRect, this.UltraTex, 1f);
+                    Widgets.DrawTextureFitted(ultraRect, this.UltraTex, 0.9f);
                     TooltipHandler.TipRegion(ultraRect, ThingDef.Named("UltrascreenTV").LabelCap);
                 }
 

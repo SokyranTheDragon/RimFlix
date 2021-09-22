@@ -6,15 +6,15 @@ namespace RimFlix
 {
     internal class Dialog_AdjustScreen : Window
     {
-        private readonly float inRectWidth = 840;
-        private readonly float inRectHeight = 680;
-        private readonly float headerHeight = 40;
-        private readonly float texDim;
+        private float inRectWidth = 840;
+        private float inRectHeight = 680;
+        private float headerHeight = 40;
+        private float texDim;
 
-        private readonly Texture tubeTex;
-        private readonly Texture flatTex;
-        private readonly Texture megaTex;
-        private readonly Texture ultraTex;
+        private Texture tubeTex;
+        private Texture flatTex;
+        private Texture megaTex;
+        private Texture ultraTex;
 
         private Vector3 tubeVec;
         private Vector3 flatVec;

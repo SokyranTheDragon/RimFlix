@@ -68,7 +68,6 @@ namespace RimFlix
         }
 
         private string showDefName;
-
         private ShowDef show;
 
         private ShowDef Show
@@ -124,6 +123,7 @@ namespace RimFlix
             }
         }
 
+        // Use Show.defName instead of Show in case user deletes show midgame
         private void ResolveShowDefName()
         {
             if (this.showDefName == null)
@@ -203,7 +203,6 @@ namespace RimFlix
             {
                 return new Vector3(RimFlixSettings.UltraOffset.x, y, -1f * RimFlixSettings.UltraOffset.y);
             }
-
             return new Vector3(0, 0, 0);
         }
 

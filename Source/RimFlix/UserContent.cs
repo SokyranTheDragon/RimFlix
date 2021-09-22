@@ -17,7 +17,7 @@ namespace RimFlix
             get
             {
                 return (from mod in LoadedModManager.RunningMods
-                        where mod.Name == "RimFlix"
+                        where mod.Name == "RimFlix - (Continued)"
                         select mod).First();
             }
         }
@@ -114,7 +114,8 @@ namespace RimFlix
                 // RimWorld sets internalPath to filePath without extension This causes problems
                 // with files that have same name but different extension (file.jpg, file.png)
                 string internalPath = filePath.Replace('\\', '/');
-                if (!RimFlixContent.contentList.ContainsKey(internalPath))
+
+                if (!RimFlixContent.contentList.ContainsKey(internalPath)) //errors here. "Sequence contains no elements"
                 {
                     string path = Path.GetDirectoryName(filePath);
                     string file = Path.GetFileName(filePath);

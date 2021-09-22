@@ -11,29 +11,29 @@ namespace RimFlix
 {
     internal class Dialog_AddShow : Window
     {
-        private readonly RimFlixSettings settings;
-        private readonly RimFlixMod mod;
-        private readonly UserShowDef currentUserShow;
+        private RimFlixSettings settings;
+        private RimFlixMod mod;
+        private UserShowDef currentUserShow;
 
         // Widget sizes
-        private readonly float padding = 8;
+        private float padding = 8;
 
-        private readonly float scrollBarWidth = 16;
-        private readonly float drivesWidth = 80;
-        private readonly float filesWidth = 370;
-        private readonly float optionsWidth = 250;
-        private readonly float pathHeight = Text.LineHeight;
-        private readonly float buttonsHeight = 32;
-        private readonly float timeInputWidth;
-        private readonly float timeUnitWidth;
+        private float scrollBarWidth = 16;
+        private float drivesWidth = 80;
+        private float filesWidth = 370;
+        private float optionsWidth = 250;
+        private float pathHeight = Text.LineHeight;
+        private float buttonsHeight = 32;
+        private float timeInputWidth;
+        private float timeUnitWidth;
 
         // File explorer panel
-        private readonly string[] drives;
+        private string[] drives;
 
         private string currentPath;
         private string lastPath = "";
-        private readonly Regex pathValidator;
-        private readonly Texture2D refreshTex;
+        private Regex pathValidator;
+        private Texture2D refreshTex;
         private bool dirInfoDirty = true;
         private DirectoryInfo dirInfo;
         private IEnumerable<DirectoryInfo> dirs;
@@ -48,7 +48,7 @@ namespace RimFlix
         private int fileCount = 0;
 
         private int dirCount = 0;
-        private readonly int maxFileCount = 500;
+        private int maxFileCount = 500;
 
         // Options panel
         private int framesCount;
@@ -56,8 +56,8 @@ namespace RimFlix
         private string showName;
         private float timeValue;
         private TimeUnit timeUnit = TimeUnit.Second;
-        private readonly string[] timeUnitLabels;
-        private readonly List<FloatMenuOption> timeUnitMenu;
+        private string[] timeUnitLabels;
+        private List<FloatMenuOption> timeUnitMenu;
         private bool playTube;
         private bool playFlat;
         private bool playMega;
@@ -400,11 +400,12 @@ namespace RimFlix
             Rect rectMega = new Rect(checkX, y, checkWidth, Text.LineHeight);
             Widgets.DrawHighlightIfMouseover(rectMega);
             Widgets.CheckboxLabeled(rectMega, ThingDef.Named("MegascreenTelevision").LabelCap, ref this.playMega);
-            y += Text.LineHeight;               //y += Text.LineHeight + this.padding * 4;
+            y += Text.LineHeight;
             Rect rectUltra = new Rect(checkX, y, checkWidth, Text.LineHeight);
             Widgets.DrawHighlightIfMouseover(rectUltra);
             Widgets.CheckboxLabeled(rectUltra, ThingDef.Named("UltrascreenTV").LabelCap, ref this.playUltra);
             y += Text.LineHeight + this.padding * 4;
+
             // Note
             GUI.color = Color.gray;
             Widgets.Label(new Rect(x, y, width, Text.LineHeight * 3), "RimFlix_Note01".Translate());
@@ -490,21 +491,18 @@ namespace RimFlix
             {
                 userShow.televisionDefStrings.Add("MegascreenTelevision");
             }
-            if (Verse.ModLister.GetActiveModWithIdentifier("VanillaExpanded.VFESpacer") != null)
+            if (this.playUltra)
             {
-                if (this.playUltra)
-                {
-                    userShow.televisionDefStrings.Add("UltrascreenTV");
-                }
+                userShow.televisionDefStrings.Add("UltrascreenTV");
             }
             // Load show assets and add to def database
+
             if (!UserContent.LoadUserShow(userShow))
             {
                 Log.Message($"RimFlix: Unable to load assets for {userShow.defName} : {userShow.label}");
                 Find.WindowStack.Add(new Dialog_MessageBox($"{"RimFlix_LoadError".Translate()}"));
                 return false;
             }
-
             // Add show to settings
             if (this.currentUserShow == null)
             {
