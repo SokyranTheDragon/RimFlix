@@ -110,7 +110,7 @@ namespace RimFlix
             this.showUpdateTime = 0;
         }
 
-        private void ResolveShow()
+        /*private void ResolveShow()
         {
             if (this.show == null)
             {
@@ -122,7 +122,7 @@ namespace RimFlix
                 this.showIndex = i;
             }
         }
-
+        */
         // Use Show.defName instead of Show in case user deletes show midgame
         private void ResolveShowDefName()
         {

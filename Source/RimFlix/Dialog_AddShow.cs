@@ -48,7 +48,7 @@ namespace RimFlix
         private int fileCount = 0;
 
         private int dirCount = 0;
-        private int maxFileCount = 500;
+        private int maxFileCount = 1000;
 
         // Options panel
         private int framesCount;

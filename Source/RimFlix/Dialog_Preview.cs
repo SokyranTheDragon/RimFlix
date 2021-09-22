@@ -89,14 +89,22 @@ namespace RimFlix
             GUI.DrawTexture(ultraRect, this.ultraTex);
 
             // Overlay textures
-            Rect tubeFrame = new Rect(tubeRect.position, GetSize(this.tubeVec, RimFlixSettings.TubeScale));
-            tubeFrame.center = tubeRect.center + this.texDim * RimFlixSettings.TubeOffset;
-            Rect flatFrame = new Rect(flatRect.position, GetSize(this.flatVec, RimFlixSettings.FlatScale));
-            flatFrame.center = flatRect.center + this.texDim * RimFlixSettings.FlatOffset;
-            Rect megaFrame = new Rect(megaRect.position, GetSize(this.megaVec, RimFlixSettings.MegaScale));
-            megaFrame.center = megaRect.center + this.texDim * RimFlixSettings.MegaOffset;
-            Rect ultraFrame = new Rect(ultraRect.position, GetSize(this.ultraVec, RimFlixSettings.UltraScale));
-            ultraFrame.center = ultraRect.center + this.texDim * RimFlixSettings.UltraOffset;
+            Rect tubeFrame = new Rect(tubeRect.position, GetSize(this.tubeVec, RimFlixSettings.TubeScale))
+            {
+                center = tubeRect.center + this.texDim * RimFlixSettings.TubeOffset
+            };
+            Rect flatFrame = new Rect(flatRect.position, GetSize(this.flatVec, RimFlixSettings.FlatScale))
+            {
+                center = flatRect.center + this.texDim * RimFlixSettings.FlatOffset
+            };
+            Rect megaFrame = new Rect(megaRect.position, GetSize(this.megaVec, RimFlixSettings.MegaScale))
+            {
+                center = megaRect.center + this.texDim * RimFlixSettings.MegaOffset
+            };
+            Rect ultraFrame = new Rect(ultraRect.position, GetSize(this.ultraVec, RimFlixSettings.UltraScale))
+            {
+                center = ultraRect.center + this.texDim * RimFlixSettings.UltraOffset
+            };
 
             GUI.DrawTexture(tubeFrame, this.frameTex);
             GUI.DrawTexture(flatFrame, this.frameTex);

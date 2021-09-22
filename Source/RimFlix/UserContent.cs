@@ -17,9 +17,11 @@ namespace RimFlix
             get
             {
                 return (from mod in LoadedModManager.RunningMods
-                        where mod.Name == "RimFlix - (Continued)"
-                        select mod).First();
+                        where mod.Name == "RimFlix"
+                        select mod)                     
+                        .First();
             }
+            
         }
 
         public static ModContentHolder<Texture2D> RimFlixContent
@@ -78,7 +80,7 @@ namespace RimFlix
             settings.UserShows.RemoveAll(show => invalidShows.Contains(show));
         }
 
-        public static bool LoadUserShow(UserShowDef userShow, bool addToDefDatabase = true)
+        public static bool LoadUserShow(UserShowDef userShow) //, bool addToDefDatabase = true)
         {
             // Get images in path
             IEnumerable<string> filePaths = Enumerable.Empty<string>();
@@ -115,7 +117,7 @@ namespace RimFlix
                 // with files that have same name but different extension (file.jpg, file.png)
                 string internalPath = filePath.Replace('\\', '/');
 
-                if (!RimFlixContent.contentList.ContainsKey(internalPath)) //errors here. "Sequence contains no elements"
+                if (!RimFlixContent.contentList.ContainsKey(internalPath))
                 {
                     string path = Path.GetDirectoryName(filePath);
                     string file = Path.GetFileName(filePath);

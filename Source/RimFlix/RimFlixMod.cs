@@ -83,12 +83,12 @@ namespace RimFlix
                         new FloatMenuOption("RimFlix_DrawTypeFit".Translate(), delegate {
                             this.settings.DrawType = DrawType.Fit;
                             RimFlixSettings.screenUpdateTime = RimFlixSettings.TotalSeconds;
-                        }),
-
+                        })
+                        /*
                         new FloatMenuOption("RimFlix_DrawTypeFill".Translate(), delegate {
                             this.settings.DrawType = DrawType.Fill;
                             RimFlixSettings.screenUpdateTime = RimFlixSettings.TotalSeconds;
-                        })
+                        })*/
                     };
                 }
                 return this.drawTypeMenu;
@@ -501,7 +501,7 @@ namespace RimFlix
                 TooltipHandler.TipRegion(ultraRect, ThingDef.Named("UltrascreenTV").LabelCap);
                 if (show.televisionDefs.Contains(ThingDef.Named("UltrascreenTV")))
                 {
-                    Widgets.DrawTextureFitted(ultraRect, this.UltraTex, 0.9f);
+                    Widgets.DrawTextureFitted(ultraRect, this.UltraTex, 0.75f);
                     TooltipHandler.TipRegion(ultraRect, ThingDef.Named("UltrascreenTV").LabelCap);
                 }
 
