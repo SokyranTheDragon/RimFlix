@@ -5,7 +5,7 @@ namespace RimFlix
 {
     internal class JobDriver_WatchRimFlix : JobDriver_WatchTelevision
     {
-        protected override void WatchTickAction()
+        public override void WatchTickAction()
         {
             Building thing = (Building)base.TargetA.Thing;
 
