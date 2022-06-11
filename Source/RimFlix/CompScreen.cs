@@ -87,7 +87,7 @@ public class CompScreen : ThingComp
     }
 
     // Gizmo toggle and Scribe ref
-    public bool AllowPawn = true;
+    public bool allowPawn = true;
 
     // Power consumption tweaks
     private CompPowerTrader compPowerTrader;
@@ -104,10 +104,18 @@ public class CompScreen : ThingComp
     {
         base.Initialize(props);
 
-        settings = LoadedModManager.GetMod<RimFlixMod>().GetSettings<RimFlixSettings>();
+        settings = RimFlixMod.Settings;
         compPowerTrader = parent.GetComp<CompPowerTrader>();
-        powerOutputOn = -1f * compPowerTrader.Props.basePowerConsumption * settings.PowerConsumptionOn / 100f;
-        powerOutputOff = -1f * compPowerTrader.Props.basePowerConsumption * settings.PowerConsumptionOff / 100f;
+
+        if (!settings.defValues.ContainsKey(parent.def)) 
+            settings.defValues[parent.def] = Props.defaultValues ?? new Values();
+
+        if (compPowerTrader != null)
+        {
+            powerOutputOn = -1f * compPowerTrader.Props.basePowerConsumption * settings.powerConsumptionOn / 100f;
+            powerOutputOff = -1f * compPowerTrader.Props.basePowerConsumption * settings.powerConsumptionOff / 100f;
+        }
+        
         screenUpdateTime = 0;
         showUpdateTime = 0;
     }
@@ -142,80 +150,49 @@ public class CompScreen : ThingComp
 
     private Vector2 GetSize(Graphic frame)
     {
-        var screenScale = new Vector2();
-        if (parent.def == ThingDef.Named("TubeTelevision"))
-        {
-            screenScale = RimFlixSettings.TubeScale;
-        }
-        else if (parent.def == ThingDef.Named("FlatscreenTelevision"))
-        {
-            screenScale = RimFlixSettings.FlatScale;
-        }
-        else if (parent.def == ThingDef.Named("MegascreenTelevision"))
-        {
-            screenScale = RimFlixSettings.MegaScale;
-        }
-        else if (parent.def == ThingDef.Named("UltrascreenTV"))
-        {
-            screenScale = RimFlixSettings.UltraScale;
-        }
-
-        var screenSize = Vector2.Scale(screenScale, parent.Graphic.drawSize);
+        if (!RimFlixMod.Settings.defValues.TryGetValue(parent.def, out var values))
+            RimFlixMod.Settings.defValues[parent.def] = values = Props.defaultValues ?? new Values();
+        
+        var screenSize = Vector2.Scale(values.Scale(parent.Rotation) ?? Vector2.zero, parent.Graphic.drawSize);
         var frameSize = new Vector2(frame.MatSingle.mainTexture.width, frame.MatSingle.mainTexture.height);
         var isWide = (frameSize.x / screenSize.x > frameSize.y / screenSize.y);
 
-        // Stretch: resize image to fill frame, ignoring aspect ratio
-        if (settings.DrawType == DrawType.Stretch)
+        return settings.drawType switch
         {
-            return screenSize;
-        }
-
-        // Fit: resize image to fit within frame while maintaining aspect ratio
-        if (settings.DrawType == DrawType.Fit)
-        {
-            return isWide
-                ? new Vector2(screenSize.x, screenSize.x * frameSize.y / frameSize.x)
-                : new Vector2(screenSize.y * frameSize.x / frameSize.y, screenSize.y);
-        }
-
-        // Fill: resize image to fill frame while maintaining aspect ratio (can be larger than parent)
-        if (settings.DrawType == DrawType.Fill)
-        {
-            return isWide
-                ? new Vector2(screenSize.y * frameSize.x / frameSize.y, screenSize.y)
-                : new Vector2(screenSize.x, frameSize.y / frameSize.x * screenSize.x);
-        }
-
-        return screenSize;
+            // Stretch: resize image to fill frame, ignoring aspect ratio
+            DrawType.Stretch => screenSize,
+            // Fit: resize image to fit within frame while maintaining aspect ratio
+            DrawType.Fit => isWide 
+                ? new Vector2(screenSize.x, screenSize.x * frameSize.y / frameSize.x) 
+                : new Vector2(screenSize.y * frameSize.x / frameSize.y, screenSize.y),
+            // Fill: resize image to fill frame while maintaining aspect ratio (can be larger than parent)
+            DrawType.Fill => isWide 
+                ? new Vector2(screenSize.y * frameSize.x / frameSize.y, screenSize.y) 
+                : new Vector2(screenSize.x, frameSize.y / frameSize.x * screenSize.x),
+            _ => screenSize
+        };
     }
 
-    private Vector3 GetOffset(ThingDef def)
+    private Vector3 GetOffset()
     {
         // Altitude layers are 0.046875f For more info refer to `Verse.Altitudes` and `Verse.SectionLayer`
         const float y = 0.0234375f;
-        if (def == ThingDef.Named("TubeTelevision"))
-            return new Vector3(RimFlixSettings.TubeOffset.x, y, -1f * RimFlixSettings.TubeOffset.y);
+        
+        if (!RimFlixMod.Settings.defValues.TryGetValue(parent.def, out var values))
+            RimFlixMod.Settings.defValues[parent.def] = values = Props.defaultValues ?? new Values();
 
-        if (def == ThingDef.Named("FlatscreenTelevision"))
-            return new Vector3(RimFlixSettings.FlatOffset.x, y, -1f * RimFlixSettings.FlatOffset.y);
-
-        if (def == ThingDef.Named("MegascreenTelevision"))
-            return new Vector3(RimFlixSettings.MegaOffset.x, y, -1f * RimFlixSettings.MegaOffset.y);
-
-        if (def == ThingDef.Named("UltrascreenTV"))
-            return new Vector3(RimFlixSettings.UltraOffset.x, y, -1f * RimFlixSettings.UltraOffset.y);
-
-        return new Vector3(0, 0, 0);
+        var offset = values.Offset(parent.Rotation) ?? default;
+        return new Vector3(offset.x, y, offset.y);
     }
 
     private bool IsPlaying()
     {
-        // Not facing south
-        if (parent.Rotation != Rot4.South)
+        // Is not supported rotation
+        if (!Props.defaultValues.IsRotationSupported(parent.Rotation))
             return false;
 
         // No pawn watching, and PlayAlways is false
-        if (SleepTimer == 0 && !settings.PlayAlways)
+        if (SleepTimer == 0 && !settings.playAlways)
             return false;
 
         // No shows available, or show has no frames
@@ -245,7 +222,7 @@ public class CompScreen : ThingComp
     // has frames)
     private void RunShow()
     {
-        if (SleepTimer > 0 && AllowPawn && ++showTicks > settings.SecondsBetweenShows.SecondsToTicks())
+        if (SleepTimer > 0 && allowPawn && ++showTicks > settings.secondsBetweenShows.SecondsToTicks())
         {
             // Pawn changed show
             showIndex = (showIndex + 1) % Shows.Count;
@@ -267,8 +244,8 @@ public class CompScreen : ThingComp
 
         if (IsPlaying())
         {
-            var drawPos = parent.DrawPos + GetOffset(parent.def);
-            FrameGraphic.Draw(drawPos, Rot4.North, parent, 0f);
+            var drawPos = parent.DrawPos + GetOffset();
+            FrameGraphic.Draw(drawPos, parent.Rotation.Opposite, parent);
         }
 
         if (!Find.TickManager.Paused)
@@ -300,16 +277,16 @@ public class CompScreen : ThingComp
             yield return new Command_Toggle
             {
                 hotKey = KeyBindingDefOf.Misc6,
-                icon = ContentFinder<Texture2D>.Get("UI/Commands/AllowPawn", true),
+                icon = ContentFinder<Texture2D>.Get("UI/Commands/AllowPawn"),
                 defaultLabel = "RimFlix_AllowPawnLabel".Translate(),
                 defaultDesc = "RimFlix_AllowPawnDesc".Translate(),
-                isActive = () => AllowPawn,
-                toggleAction = () => AllowPawn = !AllowPawn
+                isActive = () => allowPawn,
+                toggleAction = () => allowPawn = !allowPawn
             };
             yield return new Command_Action
             {
                 hotKey = KeyBindingDefOf.Misc7,
-                icon = ContentFinder<Texture2D>.Get("UI/Commands/SelectShow", true),
+                icon = ContentFinder<Texture2D>.Get("UI/Commands/SelectShow"),
                 defaultLabel = "RimFlix_SelectShowLabel".Translate(),
                 defaultDesc = "RimFlix_SelectShowDesc".Translate(),
                 action = () => Find.WindowStack.Add(new Dialog_SelectShow(this))
@@ -317,24 +294,22 @@ public class CompScreen : ThingComp
             yield return new Command_Action
             {
                 hotKey = KeyBindingDefOf.Misc8,
-                icon = ContentFinder<Texture2D>.Get("UI/Commands/NextShow", true),
+                icon = ContentFinder<Texture2D>.Get("UI/Commands/NextShow"),
                 activateSound = SoundDefOf.Click,
                 defaultLabel = "RimFlix_NextShowLabel".Translate(),
                 defaultDesc = "RimFlix_NextShowDesc".Translate(),
                 action = () => ChangeShow((showIndex + 1) % Shows.Count)
             };
         }
-
-        //yield break;
     }
 
     public override void PostExposeData()
     {
         base.PostExposeData();
         Scribe_Values.Look(ref showDefName, "RimFlix_ShowDefName");
-        Scribe_Values.Look(ref frameIndex, "RimFlix_FrameIndex", 0);
-        Scribe_Values.Look(ref showTicks, "RimFlix_ShowTicks", 0);
-        Scribe_Values.Look(ref frameTicks, "RimFlix_FrameTicks", 0);
-        Scribe_Values.Look(ref AllowPawn, "RimFlix_AllowPawn", true);
+        Scribe_Values.Look(ref frameIndex, "RimFlix_FrameIndex");
+        Scribe_Values.Look(ref showTicks, "RimFlix_ShowTicks");
+        Scribe_Values.Look(ref frameTicks, "RimFlix_FrameTicks");
+        Scribe_Values.Look(ref allowPawn, "RimFlix_AllowPawn", true);
     }
 }

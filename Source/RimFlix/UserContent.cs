@@ -36,7 +36,7 @@ public static class UserContent
         var shows = DefDatabase<ShowDef>.AllDefs;
 
         foreach (var show in shows)
-            show.disabled = settings.DisabledShows?.Contains(show.defName) == true;
+            show.disabled = settings.disabledShows?.Contains(show.defName) == true;
     }
 
     public static void LoadUserShowDefs()
@@ -45,7 +45,7 @@ public static class UserContent
         var invalidShows = new List<UserShowDef>();
         var count = 0;
 
-        foreach (var userShow in settings.UserShows)
+        foreach (var userShow in settings.userShows)
         {
             if (LoadUserShow(userShow))
             {
@@ -58,10 +58,10 @@ public static class UserContent
             }
         }
 
-        if (count != settings.UserShows.Count)
-            Log.Message($"RimFlix: {count} out of {settings.UserShows.Count} UserShowDefs loaded.");
+        if (count != settings.userShows.Count)
+            Log.Message($"RimFlix: {count} out of {settings.userShows.Count} UserShowDefs loaded.");
 
-        settings.UserShows.RemoveAll(show => invalidShows.Contains(show));
+        settings.userShows.RemoveAll(show => invalidShows.Contains(show));
     }
 
     public static bool LoadUserShow(UserShowDef userShow) //, bool addToDefDatabase = true)
@@ -136,13 +136,13 @@ public static class UserContent
     {
         // Remove from settings
         var settings = LoadedModManager.GetMod<RimFlixMod>().GetSettings<RimFlixSettings>();
-        if (!settings.UserShows.Contains(userShow))
+        if (!settings.userShows.Contains(userShow))
         {
             Log.Message($"RimFlix: Could not find show {userShow.defName} : {userShow.label}");
             return;
         }
 
-        settings.UserShows.Remove(userShow);
+        settings.userShows.Remove(userShow);
 
         // We can't delete from DefDatabase, so mark as deleted
         userShow.deleted = true;

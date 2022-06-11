@@ -9,7 +9,7 @@ namespace RimFlix;
 
 public class RimFlixMod : Mod
 {
-    private RimFlixSettings settings;
+    public static RimFlixSettings Settings { get; private set; }
 
     private List<ShowDef> shows = new();
 
@@ -28,7 +28,7 @@ public class RimFlixMod : Mod
                 else
                     show.SortName = $"{show.modContentPack.Name} : {show.label}";
 
-                show.disabled = settings.DisabledShows != null && settings.DisabledShows.Contains(show.defName);
+                show.disabled = Settings.disabledShows != null && Settings.disabledShows.Contains(show.defName);
             }
 
             shows = GetSortedShows(false);
@@ -74,17 +74,17 @@ public class RimFlixMod : Mod
         {
             new("RimFlix_DrawTypeStretch".Translate(), delegate
             {
-                settings.DrawType = DrawType.Stretch;
+                Settings.drawType = DrawType.Stretch;
                 RimFlixSettings.screenUpdateTime = RimFlixSettings.TotalSeconds;
             }),
             new("RimFlix_DrawTypeFit".Translate(), delegate
             {
-                settings.DrawType = DrawType.Fit;
+                Settings.drawType = DrawType.Fit;
                 RimFlixSettings.screenUpdateTime = RimFlixSettings.TotalSeconds;
             })
             /*
                     new FloatMenuOption("RimFlix_DrawTypeFill".Translate(), delegate {
-                        this.settings.DrawType = DrawType.Fill;
+                        this.Settings.DrawType = DrawType.Fill;
                         RimFlixSettings.screenUpdateTime = RimFlixSettings.TotalSeconds;
                     })*/
         };
@@ -139,10 +139,7 @@ public class RimFlixMod : Mod
     private SortType sortType = SortType.None;
     private bool[] sortAsc = new bool[Enum.GetNames(typeof(SortType)).Length];
 
-    public RimFlixMod(ModContentPack content) : base(content)
-    {
-        settings = GetSettings<RimFlixSettings>();
-    }
+    public RimFlixMod(ModContentPack content) : base(content) => Settings = GetSettings<RimFlixSettings>();
 
     private void DoOptions(Rect rect)
     {
@@ -162,11 +159,11 @@ public class RimFlixMod : Mod
             TooltipHandler.TipRegion(lineRect, "RimFlix_PlayAlwaysTooltip".Translate());
 
             var checkRect = lineRect.LeftPartPixels(labelWidth + inputWidth);
-            Widgets.CheckboxLabeled(checkRect, "RimFlix_PlayAlwaysLabel".Translate(), ref settings.PlayAlways, false, null, null, false);
+            Widgets.CheckboxLabeled(checkRect, "RimFlix_PlayAlwaysLabel".Translate(), ref Settings.playAlways, false, null, null, false);
             list.Gap(padding);
         }
         {
-            var buffer = settings.SecondsBetweenShows.ToString(CultureInfo.InvariantCulture);
+            var buffer = Settings.secondsBetweenShows.ToString(CultureInfo.InvariantCulture);
             var lineRect = list.GetRect(Text.LineHeight);
             Widgets.DrawHighlightIfMouseover(lineRect);
             TooltipHandler.TipRegion(lineRect, "RimFlix_SecondsBetweenShowsTooltip".Translate());
@@ -176,12 +173,12 @@ public class RimFlixMod : Mod
             var inputRect = tmpRect.LeftPartPixels(inputWidth);
             var unitRect = tmpRect.RightPartPixels(unitWidth);
             Widgets.Label(labelRect, "RimFlix_SecondsBetweenShowsLabel".Translate());
-            Widgets.TextFieldNumeric(inputRect, ref settings.SecondsBetweenShows, ref buffer, 1, 10000);
+            Widgets.TextFieldNumeric(inputRect, ref Settings.secondsBetweenShows, ref buffer, 1, 10000);
             Widgets.Label(unitRect, " " + "RimFlix_SecondsBetweenShowsUnits".Translate());
             list.Gap(padding);
         }
         {
-            var buffer = settings.PowerConsumptionOn.ToString(CultureInfo.InvariantCulture);
+            var buffer = Settings.powerConsumptionOn.ToString(CultureInfo.InvariantCulture);
             var lineRect = list.GetRect(Text.LineHeight);
             Widgets.DrawHighlightIfMouseover(lineRect);
             TooltipHandler.TipRegion(lineRect, "RimFlix_PowerConsumptionOnTooltip".Translate());
@@ -191,12 +188,12 @@ public class RimFlixMod : Mod
             var inputRect = tmpRect.LeftPartPixels(inputWidth);
             var unitRect = tmpRect.RightPartPixels(unitWidth);
             Widgets.Label(labelRect, "RimFlix_PowerConsumptionOnLabel".Translate());
-            Widgets.TextFieldNumeric(inputRect, ref settings.PowerConsumptionOn, ref buffer, 0, 10000);
+            Widgets.TextFieldNumeric(inputRect, ref Settings.powerConsumptionOn, ref buffer, 0, 10000);
             Widgets.Label(unitRect, " %");
             list.Gap(padding);
         }
         {
-            var buffer = settings.PowerConsumptionOff.ToString(CultureInfo.InvariantCulture);
+            var buffer = Settings.powerConsumptionOff.ToString(CultureInfo.InvariantCulture);
             var lineRect = list.GetRect(Text.LineHeight);
             Widgets.DrawHighlightIfMouseover(lineRect);
             TooltipHandler.TipRegion(lineRect, "RimFlix_PowerConsumptionOffTooltip".Translate());
@@ -206,7 +203,7 @@ public class RimFlixMod : Mod
             var inputRect = tmpRect.LeftPartPixels(inputWidth);
             var unitRect = tmpRect.RightPartPixels(unitWidth);
             Widgets.Label(labelRect, "RimFlix_PowerConsumptionOffLabel".Translate());
-            Widgets.TextFieldNumeric(inputRect, ref settings.PowerConsumptionOff, ref buffer, 0, 10000);
+            Widgets.TextFieldNumeric(inputRect, ref Settings.powerConsumptionOff, ref buffer, 0, 10000);
             Widgets.Label(unitRect, " %");
             list.Gap(padding);
         }
@@ -219,7 +216,7 @@ public class RimFlixMod : Mod
             var tmpRect = lineRect.RightPartPixels(lineRect.width - labelRect.width);
             var buttonRect = tmpRect.LeftPartPixels(inputWidth);
             Widgets.Label(labelRect, "RimFlix_DrawTypeLabel".Translate());
-            if (Widgets.ButtonText(buttonRect, DrawTypeNames[(int)settings.DrawType]))
+            if (Widgets.ButtonText(buttonRect, DrawTypeNames[(int)Settings.drawType]))
             {
                 Find.WindowStack.Add(new FloatMenu(DrawTypeMenu));
             }
@@ -469,7 +466,7 @@ public class RimFlixMod : Mod
                     if (Widgets.ButtonText(actionRect, "RimFlix_EnableButton".Translate()))
                     {
                         show.disabled = false;
-                        settings.DisabledShows.Remove(show.defName);
+                        Settings.disabledShows.Remove(show.defName);
                         // We want to alert CompScreen of show update, but avoid messing up sort
                         // order by requerying here
                         ShowUpdateTime = RimFlixSettings.showUpdateTime = RimFlixSettings.TotalSeconds;
@@ -480,7 +477,7 @@ public class RimFlixMod : Mod
                     if (Widgets.ButtonText(actionRect, "RimFlix_DisableButton".Translate()))
                     {
                         show.disabled = true;
-                        settings.DisabledShows.Add(show.defName);
+                        Settings.disabledShows.Add(show.defName);
                         // We want to alert CompScreen of show update, but avoid messing up sort
                         // order by requerying here
                         ShowUpdateTime = RimFlixSettings.showUpdateTime = RimFlixSettings.TotalSeconds;
