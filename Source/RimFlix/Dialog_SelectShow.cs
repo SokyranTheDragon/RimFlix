@@ -3,63 +3,62 @@ using UnityEngine;
 using Verse;
 using Verse.Sound;
 
-namespace RimFlix
+namespace RimFlix;
+
+public class Dialog_SelectShow : Window
 {
-    public class Dialog_SelectShow : Window
+    private CompScreen screen;
+    private Vector2 scrollPosition;
+    private float buttonHeight = 32f;
+    private float buttonMargin = 2f;
+
+    public Dialog_SelectShow(CompScreen screen)
     {
-        private CompScreen screen;
-        private Vector2 scrollPosition;
-        private float buttonHeight = 32f;
-        private float buttonMargin = 2f;
+        this.screen = screen;
+        doCloseButton = true;
+        doCloseX = true;
+        closeOnClickedOutside = true;
+        absorbInputAroundWindow = true;
+    }
 
-        public Dialog_SelectShow(CompScreen screen)
+    public override Vector2 InitialSize
+    {
+        get
         {
-            this.screen = screen;
-            this.doCloseButton = true;
-            this.doCloseX = true;
-            this.closeOnClickedOutside = true;
-            this.absorbInputAroundWindow = true;
+            return new Vector2(340f, 580f);
         }
+    }
 
-        public override Vector2 InitialSize
+    public override void DoWindowContents(Rect inRect)
+    {
+        Text.Font = GameFont.Small;
+        var outRect = new Rect(inRect);
+        outRect.yMin += 20f;
+        outRect.yMax -= 40f;
+        outRect.xMax -= 16f;
+        var viewHeight = (buttonHeight + buttonMargin) * screen.Shows.Count + 80f;
+        var viewWidth = viewHeight > outRect.height ? outRect.width - 32f : outRect.width - 16f;
+        var viewRect = new Rect(0f, 0f, viewWidth, viewHeight);
+        Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect, true);
+        try
         {
-            get
+            float y = 0;
+            foreach (var show in screen.Shows)
             {
-                return new Vector2(340f, 580f);
-            }
-        }
-
-        public override void DoWindowContents(Rect inRect)
-        {
-            Text.Font = GameFont.Small;
-            Rect outRect = new Rect(inRect);
-            outRect.yMin += 20f;
-            outRect.yMax -= 40f;
-            outRect.xMax -= 16f;
-            float viewHeight = (this.buttonHeight + this.buttonMargin) * this.screen.Shows.Count + 80f;
-            float viewWidth = viewHeight > outRect.height ? outRect.width - 32f : outRect.width - 16f;
-            Rect viewRect = new Rect(0f, 0f, viewWidth, viewHeight);
-            Widgets.BeginScrollView(outRect, ref this.scrollPosition, viewRect, true);
-            try
-            {
-                float y = 0;
-                foreach (ShowDef show in this.screen.Shows)
+                var rect = new Rect(16f, y, viewRect.width, buttonHeight);
+                TooltipHandler.TipRegion(rect, show.description);
+                if (Widgets.ButtonText(rect, show.label, true, false, true))
                 {
-                    Rect rect = new Rect(16f, y, viewRect.width, this.buttonHeight);
-                    TooltipHandler.TipRegion(rect, show.description);
-                    if (Widgets.ButtonText(rect, show.label, true, false, true))
-                    {
-                        this.screen.ChangeShow(show);
-                        SoundDefOf.Click.PlayOneShotOnCamera(null);
-                        this.Close(true);
-                    }
-                    y += (this.buttonHeight + this.buttonMargin);
+                    screen.ChangeShow(show);
+                    SoundDefOf.Click.PlayOneShotOnCamera(null);
+                    Close(true);
                 }
+                y += (buttonHeight + buttonMargin);
             }
-            finally
-            {
-                Widgets.EndScrollView();
-            }
+        }
+        finally
+        {
+            Widgets.EndScrollView();
         }
     }
 }

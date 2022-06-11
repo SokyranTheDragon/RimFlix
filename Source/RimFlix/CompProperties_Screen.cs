@@ -1,12 +1,8 @@
 ﻿using Verse;
 
-namespace RimFlix
+namespace RimFlix;
+
+public class CompProperties_Screen : CompProperties
 {
-    public class CompProperties_Screen : CompProperties
-    {
-        public CompProperties_Screen()
-        {
-            compClass = typeof(CompScreen);
-        }
-    }
+    public CompProperties_Screen() => compClass = typeof(CompScreen);
 }
