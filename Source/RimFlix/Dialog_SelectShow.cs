@@ -1,5 +1,4 @@
-﻿using Multiplayer.API;
-using RimWorld;
+﻿using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
@@ -57,7 +56,6 @@ public class Dialog_SelectShow : Window
         }
     }
 
-    [SyncMethod]
     private static void ChangeShow(CompScreen screen, ShowDef show)
     {
         screen.ChangeShow(show);
