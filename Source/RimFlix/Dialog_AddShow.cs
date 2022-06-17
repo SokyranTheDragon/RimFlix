@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -11,36 +12,36 @@ namespace RimFlix;
 
 internal class Dialog_AddShow : Window
 {
-    private RimFlixSettings settings;
-    private RimFlixMod mod;
-    private UserShowDef currentUserShow;
+    private readonly ShowDef currentShow;
+    private readonly UserShowDef currentUserShow;
 
     // Widget sizes
-    private float padding = 8;
+    private const float Padding = 8;
 
-    private float scrollBarWidth = 16;
-    private float drivesWidth = 80;
-    private float filesWidth = 370;
-    private float optionsWidth = 250;
-    private float pathHeight = Text.LineHeight;
-    private float buttonsHeight = 32;
-    private float timeInputWidth;
-    private float timeUnitWidth;
+    private const float ScrollBarWidth = 16;
+    private readonly float drivesWidth = 80;
+    private readonly float filesWidth = 370;
+    private const float OptionsWidth = 250;
+    private readonly float pathHeight = Text.LineHeight;
+    private const float ButtonsHeight = 32;
+    private readonly float timeInputWidth;
+    private readonly float timeUnitWidth;
+    private readonly float configTvWidth;
 
     // File explorer panel
-    private string[] drives;
+    private readonly string[] drives;
 
     private string currentPath;
     private string lastPath = "";
-    private Regex pathValidator;
-    private Texture2D refreshTex;
+    private readonly Regex pathValidator;
+    private readonly Texture2D refreshTex;
     private bool dirInfoDirty = true;
     private DirectoryInfo dirInfo;
     private IEnumerable<DirectoryInfo> dirs;
     private IEnumerable<FileInfo> files;
-    private Color drivesBackgroundColor = new(0.17f, 0.18f, 0.19f);
-    private Color filesBackgroundColor = new(0.08f, 0.09f, 0.11f);
-    private Color filesTextColor = new(0.6f, 0.6f, 0.6f);
+    private readonly Color drivesBackgroundColor = new(0.17f, 0.18f, 0.19f);
+    private readonly Color filesBackgroundColor = new(0.08f, 0.09f, 0.11f);
+    private readonly Color filesTextColor = new(0.6f, 0.6f, 0.6f);
     private Vector2 drivesScrollPos = Vector2.zero;
     private Vector2 filesScrollPos = Vector2.zero;
 
@@ -48,7 +49,7 @@ internal class Dialog_AddShow : Window
     private int fileCount = 0;
 
     private int dirCount = 0;
-    private int maxFileCount = 1000;
+    private const int MaxFileCount = 1000;
 
     // Options panel
     private int framesCount;
@@ -56,28 +57,26 @@ internal class Dialog_AddShow : Window
     private string showName;
     private float timeValue;
     private TimeUnit timeUnit = TimeUnit.Second;
-    private string[] timeUnitLabels;
-    private List<FloatMenuOption> timeUnitMenu;
-    private bool playTube;
-    private bool playFlat;
-    private bool playMega;
-    private bool playUltra;
+    private readonly string[] timeUnitLabels;
+    private readonly List<FloatMenuOption> timeUnitMenu;
+    private readonly ShowStatus status;
 
-    public Dialog_AddShow(UserShowDef userShow = null, RimFlixMod mod = null)
+    public Dialog_AddShow(ShowDef show = null)
     {
         // Window properties
         doCloseX = true;
         doCloseButton = false;
         forcePause = true;
         absorbInputAroundWindow = true;
+        currentShow = show;
 
         // Initialize object
-        settings = LoadedModManager.GetMod<RimFlixMod>().GetSettings<RimFlixSettings>();
         refreshTex = ContentFinder<Texture2D>.Get("UI/Buttons/Refresh", true);
         var v1 = Text.CalcSize("RimFlix_TimeSeconds".Translate());
         var v2 = Text.CalcSize("RimFlix_TimeTicks".Translate());
-        timeUnitWidth = Math.Max(v1.x, v2.x) + padding * 2;
-        timeInputWidth = optionsWidth - timeUnitWidth - padding * 2;
+        timeUnitWidth = Math.Max(v1.x, v2.x) + Padding * 2;
+        timeInputWidth = OptionsWidth - timeUnitWidth - Padding * 2;
+        configTvWidth = Text.CalcSize("RimFlix_ConfigureSupportedTv".Translate()).x + Padding * 2;
         timeUnitMenu = new List<FloatMenuOption>
         {
             new("RimFlix_TimeSeconds".Translate(), delegate { timeUnit = TimeUnit.Second; }),
@@ -102,28 +101,23 @@ internal class Dialog_AddShow : Window
         }
 
         // Show properties
-        if (userShow != null)
+        if (currentShow != null)
         {
-            showName = userShow.label;
-            currentPath = userShow.path;
-            timeValue = userShow.secondsBetweenFrames;
-            playTube = userShow.televisionDefStrings.Contains("TubeTelevision");
-            playFlat = userShow.televisionDefStrings.Contains("FlatscreenTelevision");
-            playMega = userShow.televisionDefStrings.Contains("MegascreenTelevision");
-            playUltra = userShow.televisionDefStrings.Contains("UltrascreenTV");
+            showName = currentShow.label;
+            timeValue = currentShow.secondsBetweenFrames;
+            currentUserShow = currentShow as UserShowDef;
+
+            status = RimFlixMod.Settings.showStatus.FirstOrDefault(x => x.showDefName == currentShow.defName);
         }
         else
         {
+            var settings = RimFlixMod.Settings;
             showName = "RimFlix_DefaultName".Translate();
             currentPath = Directory.Exists(settings.lastPath) ? settings.lastPath : settings.defaultPath;
             timeValue = 10;
-            playTube = false;
-            playFlat = false;
-            playMega = false;
-            playUltra = false;
+
+            status = new ShowStatus();
         }
-        currentUserShow = userShow;
-        this.mod = mod;
     }
 
     public override Vector2 InitialSize => new(736f, 536f);
@@ -133,12 +127,13 @@ internal class Dialog_AddShow : Window
         var rectPath = rect.TopPartPixels(pathHeight);
         DoPath(rectPath);
 
-        var rectItems = rect.BottomPartPixels(rect.height - pathHeight - padding);
+        var rectItems = rect.BottomPartPixels(rect.height - pathHeight - Padding);
         if (drives != null)
         {
             var rectDrives = rectItems.LeftPartPixels(drivesWidth);
             DoDrives(rectDrives);
         }
+
         var rectFiles = rectItems.RightPartPixels(filesWidth);
         DoFiles(rectFiles);
     }
@@ -148,7 +143,7 @@ internal class Dialog_AddShow : Window
         //Widgets.DrawBox(rect);
         Text.Font = GameFont.Small;
         Text.Anchor = TextAnchor.UpperLeft;
-        var labelWidth = Text.CalcSize("RimFlix_CurrentDirectoryLabel".Translate()).x + padding;
+        var labelWidth = Text.CalcSize("RimFlix_CurrentDirectoryLabel".Translate()).x + Padding;
         Widgets.Label(rect.LeftPartPixels(labelWidth), "RimFlix_CurrentDirectoryLabel".Translate());
         var rightRect = rect.RightPartPixels(rect.width - labelWidth);
         var refreshRect = rightRect.RightPartPixels(rightRect.height);
@@ -157,10 +152,11 @@ internal class Dialog_AddShow : Window
             dirInfoDirty = true;
             soundAppear.PlayOneShotOnCamera(null);
         }
+
         // Using Color.gray for button changes default GUI color, so we need to change it back
         // to white
         GUI.color = Color.white;
-        currentPath = Widgets.TextField(rightRect.LeftPartPixels(rightRect.width - refreshRect.width - padding), currentPath, int.MaxValue, pathValidator);
+        currentPath = Widgets.TextField(rightRect.LeftPartPixels(rightRect.width - refreshRect.width - Padding), currentPath, int.MaxValue, pathValidator);
     }
 
     private void DoDrives(Rect rect)
@@ -171,18 +167,19 @@ internal class Dialog_AddShow : Window
         Text.Anchor = TextAnchor.MiddleLeft;
 
         float buttonHeight = 24;
-        var rectView = new Rect(0, 0, rect.width - scrollBarWidth, buttonHeight * drives.Count());
+        var rectView = new Rect(0, 0, rect.width - ScrollBarWidth, buttonHeight * drives.Count());
         Widgets.BeginScrollView(rect, ref drivesScrollPos, rectView);
         var index = 0;
         foreach (var drive in drives)
         {
-            var rectButton = new Rect(rectView.x, rectView.y + index * buttonHeight, rectView.width + scrollBarWidth, buttonHeight);
+            var rectButton = new Rect(rectView.x, rectView.y + index * buttonHeight, rectView.width + ScrollBarWidth, buttonHeight);
             if (Widgets.ButtonText(rectButton, $" {drive}", false, false, true))
             {
                 currentPath = drive;
                 dirInfoDirty = true;
                 soundAmbient.PlayOneShotOnCamera(null);
             }
+
             if (drive == Path.GetPathRoot(currentPath))
             {
                 Widgets.DrawHighlightSelected(rectButton);
@@ -191,8 +188,10 @@ internal class Dialog_AddShow : Window
             {
                 Widgets.DrawHighlightIfMouseover(rectButton);
             }
+
             index++;
         }
+
         Widgets.EndScrollView();
     }
 
@@ -202,6 +201,7 @@ internal class Dialog_AddShow : Window
         {
             return;
         }
+
         try
         {
             dirInfo = new DirectoryInfo(currentPath);
@@ -222,10 +222,11 @@ internal class Dialog_AddShow : Window
             dirs = Enumerable.Empty<DirectoryInfo>();
             files = Enumerable.Empty<FileInfo>();
         }
+
         fileCount = files.Count();
         dirCount = dirs.Count();
         lastPath = currentPath;
-        settings.lastPath = currentPath;
+        RimFlixMod.Settings.lastPath = currentPath;
         dirInfoDirty = false;
     }
 
@@ -245,24 +246,25 @@ internal class Dialog_AddShow : Window
         {
             count++;
         }
+
         var buttonHeight = Text.LineHeight;
 
         // Fix for directories with abnormally large file counts
         Rect rectView;
-        if (fileCount > maxFileCount)
+        if (fileCount > MaxFileCount)
         {
-            rectView = new Rect(0, 0, rect.width - scrollBarWidth, buttonHeight * dirCount + 1);
+            rectView = new Rect(0, 0, rect.width - ScrollBarWidth, buttonHeight * dirCount + 1);
         }
         else
         {
-            rectView = new Rect(0, 0, rect.width - scrollBarWidth, buttonHeight * count);
+            rectView = new Rect(0, 0, rect.width - ScrollBarWidth, buttonHeight * count);
         }
 
         Widgets.BeginScrollView(rect, ref filesScrollPos, rectView);
         var index = 0;
 
         // Parent directory
-        var rectButton = new Rect(rectView.x, rectView.y + index * buttonHeight, rectView.width + scrollBarWidth, buttonHeight);
+        var rectButton = new Rect(rectView.x, rectView.y + index * buttonHeight, rectView.width + ScrollBarWidth, buttonHeight);
         if (dirInfo.Parent != null)
         {
             //Rect rectButton = new Rect(rectView.x, rectView.y + index * buttonHeight, rectView.width + this.scrollBarWidth, buttonHeight);
@@ -273,6 +275,7 @@ internal class Dialog_AddShow : Window
                 currentPath = dirInfo.Parent.FullName;
                 dirInfoDirty = true;
             }
+
             rectButton.y += buttonHeight;
             index++;
         }
@@ -285,6 +288,7 @@ internal class Dialog_AddShow : Window
             {
                 Widgets.DrawAltRect(rectButton);
             }
+
             Widgets.DrawHighlightIfMouseover(rectButton);
             if (Widgets.ButtonText(rectButton, $" {d.Name}", false, false, Color.white, true))
             {
@@ -300,16 +304,17 @@ internal class Dialog_AddShow : Window
                     dirInfoDirty = true;
                 }
             }
+
             rectButton.y += buttonHeight;
             index++;
         }
 
         // Files
-        if (fileCount > maxFileCount)
+        if (fileCount > MaxFileCount)
         {
             // Too many files to display
-            Widgets.Label(new Rect(rectView.x, rectView.y + buttonHeight, rectView.width + scrollBarWidth, buttonHeight),
-                $"Too many files to display ({fileCount} files, max {maxFileCount})");
+            Widgets.Label(new Rect(rectView.x, rectView.y + buttonHeight, rectView.width + ScrollBarWidth, buttonHeight),
+                $"Too many files to display ({fileCount} files, max {MaxFileCount})");
         }
         else
         {
@@ -321,8 +326,9 @@ internal class Dialog_AddShow : Window
                 {
                     Widgets.DrawAltRect(rectButton);
                 }
+
                 Widgets.DrawHighlightIfMouseover(rectButton);
-                if (Widgets.ButtonText(rectButton, $" {f.Name}", false, false, filesTextColor, true))
+                if (Widgets.ButtonText(rectButton, $" {f.Name}", false, false, filesTextColor, false))
                 {
                     f.Refresh();
                     if (f.Exists)
@@ -335,10 +341,12 @@ internal class Dialog_AddShow : Window
                         dirInfoDirty = true;
                     }
                 }
+
                 rectButton.y += buttonHeight;
                 index++;
             }
         }
+
         Widgets.EndScrollView();
     }
 
@@ -348,85 +356,100 @@ internal class Dialog_AddShow : Window
         Text.Anchor = TextAnchor.UpperLeft;
 
         var y = rect.y;
-        var x = rect.x + padding;
-        var width = rect.width - padding;
+        var x = rect.x + Padding;
+        var width = rect.width - Padding;
+        var isUserShow = currentUserShow == null;
 
         // Frame count
         string framesText = framesCount == 1 ? "RimFlix_FrameLabel".Translate(framesCount) : "RimFlix_FramesLabel".Translate(framesCount);
         Widgets.Label(new Rect(x, y, width, Text.LineHeight), framesText);
-        y += Text.LineHeight + padding / 2;
+        y += Text.LineHeight + Padding / 2;
         Widgets.Label(new Rect(x, y, width, Text.LineHeight), "RimFlix_InfoLabel".Translate());
-        y += Text.LineHeight + padding * 4;
+        y += Text.LineHeight + Padding * 4;
 
         // Show name
         Widgets.Label(new Rect(x, y, width, Text.LineHeight), "RimFlix_NameLabel".Translate());
-        y += Text.LineHeight + padding / 2;
-        showName = Widgets.TextField(new Rect(x, y, width, Text.LineHeight), showName);
-        y += Text.LineHeight + padding * 4;
+        y += Text.LineHeight + Padding / 2;
+        showName = Widgets.TextArea(new Rect(x, y, width, Text.LineHeight), showName, !isUserShow);
+        y += Text.LineHeight + Padding * 4;
 
         // Time between frames
         Widgets.Label(new Rect(x, y, width, Text.LineHeight), "RimFlix_TimeLabel".Translate());
-        y += Text.LineHeight + padding / 2;
+        y += Text.LineHeight + Padding / 2;
         var rectTimeInput = new Rect(x, y, width, Text.LineHeight);
-        var buffer = timeValue.ToString();
-        Widgets.TextFieldNumeric(new Rect(rectTimeInput.LeftPartPixels(timeInputWidth)), ref timeValue, ref buffer, 1f, float.MaxValue - 1);
-        if (Widgets.ButtonText(new Rect(rectTimeInput.RightPartPixels(timeUnitWidth)), timeUnitLabels[(int)timeUnit]))
-        {
+
+        var textFieldRect = new Rect(rectTimeInput.LeftPartPixels(timeInputWidth));
+        var buffer = timeValue.ToString(CultureInfo.InvariantCulture);
+        if (isUserShow)
+            Widgets.TextFieldNumeric(textFieldRect, ref timeValue, ref buffer, 1f, float.MaxValue - 1);
+        else
+            Widgets.TextArea(new Rect(textFieldRect), buffer, true);
+
+        var buttonRect = new Rect(rectTimeInput.RightPartPixels(timeUnitWidth));
+        if (Widgets.ButtonText(buttonRect, timeUnitLabels[(int)timeUnit], active: isUserShow))
             Find.WindowStack.Add(new FloatMenu(timeUnitMenu));
-        }
         y += Text.LineHeight;
-        Widgets.Label(new Rect(x, y, width, Text.LineHeight), string.Format("(1 {0} = {1} {2})", "RimFlix_TimeSecond".Translate(), 60, "RimFlix_TimeTicks".Translate()));
-        y += Text.LineHeight + padding * 4;
+
+        Widgets.Label(new Rect(x, y, width, Text.LineHeight), $"(1 {"RimFlix_TimeSecond".Translate()} = {60} {"RimFlix_TimeTicks".Translate()})");
+        y += Text.LineHeight + Padding * 4;
 
         // Television types
-        var checkX = x + padding;
-        var checkWidth = width - padding * 2;
-        Widgets.Label(new Rect(x, y, width, Text.LineHeight), "RimFlix_PlayLabel".Translate());
-        y += Text.LineHeight + padding / 2;
-        var rectTube = new Rect(checkX, y, checkWidth, Text.LineHeight);
-        Widgets.DrawHighlightIfMouseover(rectTube);
-        Widgets.CheckboxLabeled(rectTube, ThingDef.Named("TubeTelevision").LabelCap, ref playTube);
+        buttonRect = new Rect(rectTimeInput.RightPartPixels(configTvWidth))
+        {
+            y = y
+        };
+        if (Widgets.ButtonText(buttonRect, "RimFlix_ConfigureSupportedTv".Translate()))
+        {
+            var options = status.status
+                .Select(kvp => (def: DefDatabase<ThingDef>.GetNamedSilentFail(kvp.Key), status: kvp.Value))
+                .Where(tuple => tuple.def != null)
+                .OrderBy(tuple => tuple.def.LabelCap.ToString())
+                .Select(tuple =>
+            {
+                var (def, enabled) = tuple;
+                var label = (enabled ? "RimFlix_SupportedTvEnabled" : "RimFlix_SupportedTvDisabled").Translate(def.LabelCap);
+
+                void Toggle() => status.status[def.defName] = !status.status[def.defName];
+
+                return new FloatMenuOption(label, Toggle, def);
+            }).ToList();
+
+            Find.WindowStack.Add(new FloatMenu(options));
+        }
+
         y += Text.LineHeight;
-        var rectFlat = new Rect(checkX, y, checkWidth, Text.LineHeight);
-        Widgets.DrawHighlightIfMouseover(rectFlat);
-        Widgets.CheckboxLabeled(rectFlat, ThingDef.Named("FlatscreenTelevision").LabelCap, ref playFlat);
-        y += Text.LineHeight;
-        var rectMega = new Rect(checkX, y, checkWidth, Text.LineHeight);
-        Widgets.DrawHighlightIfMouseover(rectMega);
-        Widgets.CheckboxLabeled(rectMega, ThingDef.Named("MegascreenTelevision").LabelCap, ref playMega);
-        y += Text.LineHeight;
-        var rectUltra = new Rect(checkX, y, checkWidth, Text.LineHeight);
-        Widgets.DrawHighlightIfMouseover(rectUltra);
-        Widgets.CheckboxLabeled(rectUltra, ThingDef.Named("UltrascreenTV").LabelCap, ref playUltra);
-        y += Text.LineHeight + padding * 4;
 
         // Note
-        GUI.color = Color.gray;
-        Widgets.Label(new Rect(x, y, width, Text.LineHeight * 3), "RimFlix_Note01".Translate());
-        GUI.color = Color.white;
+        if (isUserShow)
+        {
+            GUI.color = Color.gray;
+            Widgets.Label(new Rect(x, y, width, Text.LineHeight * 3), "RimFlix_Note01".Translate());
+            GUI.color = Color.white;
+        }
     }
 
     private void DoButtons(Rect rect)
     {
         var cancelSize = Text.CalcSize("RimFlix_CancelButton".Translate());
-        cancelSize.Set(cancelSize.x + 4 * padding, cancelSize.y + 1 * padding);
+        cancelSize.Set(cancelSize.x + 4 * Padding, cancelSize.y + 1 * Padding);
         var rectCancel = new Rect(rect.x + rect.width - cancelSize.x, rect.y, cancelSize.x, cancelSize.y);
         TooltipHandler.TipRegion(rectCancel, "RimFlix_CancelTooltip".Translate());
-        if (Widgets.ButtonText(rectCancel, "RimFlix_CancelButton".Translate(), true, false, true))
+        if (Widgets.ButtonText(rectCancel, "RimFlix_CancelButton".Translate(), true, false))
         {
             Close(false);
         }
 
         var createSize = Text.CalcSize("RimFlix_AddShowButton".Translate());
-        createSize.Set(createSize.x + 4 * padding, createSize.y + 1 * padding);
-        var rectCreate = new Rect(rect.x + rect.width - cancelSize.x - createSize.x - padding, rect.y, createSize.x, createSize.y);
+        createSize.Set(createSize.x + 4 * Padding, createSize.y + 1 * Padding);
+        var rectCreate = new Rect(rect.x + rect.width - cancelSize.x - createSize.x - Padding, rect.y, createSize.x, createSize.y);
         TooltipHandler.TipRegion(rectCreate, "RimFlix_AddShowTooltip2".Translate());
-        string buttonLabel = currentUserShow == null ? "RimFlix_AddShowButton".Translate() : "RimFlix_EditShowButton".Translate();
-        if (Widgets.ButtonText(rectCreate, buttonLabel, true, false, true))
+        string buttonLabel = currentShow == null ? "RimFlix_AddShowButton".Translate() : "RimFlix_EditShowButton".Translate();
+
+        if (Widgets.ButtonText(rectCreate, buttonLabel, true, false))
         {
-            if (CreateShow())
+            if (AcceptShow())
             {
-                Close(true);
+                Close();
             }
         }
     }
@@ -434,13 +457,24 @@ internal class Dialog_AddShow : Window
     public override void DoWindowContents(Rect rect)
     {
         var rectExplorer = rect.LeftPartPixels(drivesWidth + filesWidth);
-        var rectRight = rect.RightPartPixels(optionsWidth);
-        var rectOptions = rectRight.TopPartPixels(rectRight.height - buttonsHeight);
-        var rectButtons = rectRight.BottomPartPixels(buttonsHeight);
+        var rectRight = rect.RightPartPixels(OptionsWidth);
+        var rectOptions = rectRight.TopPartPixels(rectRight.height - ButtonsHeight);
+        var rectButtons = rectRight.BottomPartPixels(ButtonsHeight);
 
-        DoExplorer(rectExplorer);
+        if (currentUserShow != null || currentShow == null)
+            DoExplorer(rectExplorer);
         DoOptions(rectOptions);
         DoButtons(rectButtons);
+    }
+
+    private bool AcceptShow()
+    {
+        // New show or editing existing user show
+        if (currentShow == null || currentUserShow != null)
+            return CreateShow();
+
+        // Built-in show
+        return true;
     }
 
     private bool CreateShow()
@@ -459,65 +493,46 @@ internal class Dialog_AddShow : Window
             return false;
         }
 
-        // Check if at least one television type is selected
-        if (!(playTube || playFlat || playMega || playUltra))
-        {
-            Find.WindowStack.Add(new Dialog_MessageBox("RimFlix_NoTelevisionType".Translate()));
-            return false;
-        }
-
         // Create or modify user show
-        var userShow = currentUserShow ?? new UserShowDef() { defName = UserContent.GetUniqueId() };
+        var userShow = currentUserShow ?? new UserShowDef { defName = UserContent.GetUniqueId() };
         userShow.path = currentPath;
         userShow.label = showName;
         userShow.description = $"{"RimFlix_CustomDescPrefix".Translate(currentPath, DateTime.Now.ToString())}";
         userShow.secondsBetweenFrames = (timeUnit == TimeUnit.Tick) ? timeValue / 60f : timeValue;
-        userShow.televisionDefStrings = new List<string>();
-        if (playTube)
-        {
-            userShow.televisionDefStrings.Add("TubeTelevision");
-        }
-        if (playFlat)
-        {
-            userShow.televisionDefStrings.Add("FlatscreenTelevision");
-        }
-        if (playMega)
-        {
-            userShow.televisionDefStrings.Add("MegascreenTelevision");
-        }
-        if (playUltra)
-        {
-            userShow.televisionDefStrings.Add("UltrascreenTV");
-        }
-        // Load show assets and add to def database
+        userShow.televisionDefStrings = status.status.Where(x => x.Value).Select(x => x.Key).ToList();
 
+        // Load show assets and add to def database
         if (!UserContent.LoadUserShow(userShow))
         {
             Log.Message($"RimFlix: Unable to load assets for {userShow.defName} : {userShow.label}");
             Find.WindowStack.Add(new Dialog_MessageBox($"{"RimFlix_LoadError".Translate()}"));
             return false;
         }
+
         // Add show to settings
-        if (currentUserShow == null)
-        {
-            settings.UserShows.Add(userShow);
-        }
+        if (currentShow == null)
+            RimFlixMod.Settings.userShows.Add(userShow);
 
         // Mark shows as dirty
         RimFlixSettings.showUpdateTime = RimFlixSettings.TotalSeconds;
 
         // If editing a show, avoid requerying shows to keep sort order
-        if (currentUserShow != null)
+        if (currentShow != null)
         {
             userShow.SortName = $"{"RimFlix_UserShowLabel".Translate()} : {userShow.label}";
-            mod.ShowUpdateTime = RimFlixSettings.showUpdateTime;
+            RimFlixMod.Settings.ShowUpdateTime = RimFlixSettings.showUpdateTime;
         }
+
+        status.showDefName = userShow.defName;
+        userShow.RecheckDisabled();
+        RimFlixMod.Settings.showStatus.Add(status);
+
         return true;
     }
 
     public override void OnAcceptKeyPressed()
     {
-        if (CreateShow())
+        if (AcceptShow())
         {
             base.OnAcceptKeyPressed();
         }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using Verse;
 
 namespace RimFlix;
@@ -17,54 +18,83 @@ public class Values : IExposable
 
     public void ExposeData()
     {
-        Scribe_Values.Look(ref scaleSouth, "scaleSouth");
-        Scribe_Values.Look(ref offsetSouth, "offsetSouth");
-        Scribe_Values.Look(ref scaleNorth, "scaleNorth");
-        Scribe_Values.Look(ref offsetNorth, "offsetNorth");
-        Scribe_Values.Look(ref scaleEast, "scaleEast");
-        Scribe_Values.Look(ref offsetEast, "offsetEast");
-        Scribe_Values.Look(ref scaleWest, "scaleWest");
-        Scribe_Values.Look(ref offsetWest, "offsetWest");
+        SaveAccurateVector(ref scaleSouth, "scaleSouth");
+        SaveAccurateVector(ref offsetSouth, "offsetSouth");
+        SaveAccurateVector(ref scaleNorth, "scaleNorth");
+        SaveAccurateVector(ref offsetNorth, "offsetNorth");
+        SaveAccurateVector(ref scaleEast, "scaleEast");
+        SaveAccurateVector(ref offsetEast, "offsetEast");
+        SaveAccurateVector(ref scaleWest, "scaleWest");
+        SaveAccurateVector(ref offsetWest, "offsetWest");
         Scribe_Values.Look(ref drawType, "drawType");
     }
 
-    public Vector2? Scale(Rot4 rotation)
+    protected void SaveAccurateVector(ref Vector2? vec, string label)
     {
-        if (rotation == Rot4.South)
-            return scaleSouth;
-        if (rotation == Rot4.North)
-            return scaleNorth;
-        if (rotation == Rot4.East)
-            return scaleEast;
-        if (rotation == Rot4.West)
-            return scaleWest;
-        return null;
+        var x = vec?.x;
+        var y = vec?.y;
+        
+        Scribe_Values.Look(ref x, $"{label}x");
+        Scribe_Values.Look(ref y, $"{label}x");
+
+        if (x == null || y == null)
+            return;
+        
+        vec = new Vector2(x.Value, y.Value);
     }
 
-    public Vector2? Offset(Rot4 rotation)
+    public ref Vector2? GetScale(Rot4 rotation)
     {
         if (rotation == Rot4.South)
-            return offsetSouth;
+            return ref scaleSouth;
         if (rotation == Rot4.North)
-            return offsetNorth;
+            return ref scaleNorth;
         if (rotation == Rot4.East)
-            return offsetEast;
+            return ref scaleEast;
         if (rotation == Rot4.West)
-            return offsetWest;
-        return null;
+            return ref scaleWest;
+        throw new ArgumentOutOfRangeException(nameof(rotation), rotation, $"Provided rotation is not defined for the value. Use {nameof(IsRotationSupported)} first.");
+    }
+
+    public ref Vector2? GetOffset(Rot4 rotation)
+    {
+        if (rotation == Rot4.South)
+            return ref offsetSouth;
+        if (rotation == Rot4.North)
+            return ref offsetNorth;
+        if (rotation == Rot4.East)
+            return ref offsetEast;
+        if (rotation == Rot4.West)
+            return ref offsetWest;
+        throw new ArgumentOutOfRangeException(nameof(rotation), rotation, $"Provided rotation is not defined for the value. Use {nameof(IsRotationSupported)} first.");
     }
 
     public bool IsRotationSupported(Rot4 rotation)
     {
         if (rotation == Rot4.South)
-            return this is { offsetSouth: { }, scaleSouth: { } };
+            return offsetSouth != null && scaleSouth != null;
         if (rotation == Rot4.North)
-            return this is { offsetNorth: { }, scaleNorth: { } };
+            return offsetNorth != null && scaleNorth != null;
         if (rotation == Rot4.East)
-            return this is { offsetEast: { }, scaleEast: { } };
+            return offsetEast != null && scaleEast != null;
         if (rotation == Rot4.West)
-            return this is { offsetWest: { }, scaleWest: { } };
+            return offsetWest != null && scaleWest != null;
         return false;
+    }
+
+    public void RefreshValues(ThingDef def)
+    {
+        var values = def.GetCompProperties<CompProperties_Screen>()?.defaultValues;
+        if (values == null) return;
+
+        scaleSouth = values.scaleSouth;
+        offsetSouth = values.offsetSouth;
+        scaleNorth = values.scaleNorth;
+        offsetNorth = values.offsetNorth;
+        scaleEast = values.scaleEast;
+        offsetEast = values.offsetEast;
+        scaleWest = values.scaleWest;
+        offsetWest = values.offsetWest;
     }
 
     public Values Copy()

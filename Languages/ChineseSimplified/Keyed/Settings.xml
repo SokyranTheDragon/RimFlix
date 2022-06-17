@@ -46,14 +46,14 @@
   <RimFlix_TimeSeconds>秒</RimFlix_TimeSeconds>  
   <RimFlix_TimeSecond>秒</RimFlix_TimeSecond>  
   <RimFlix_TimeTicks>ticks</RimFlix_TimeTicks>  
-  <RimFlix_PlayLabel>该节目播放于:</RimFlix_PlayLabel>  
+<!--  <RimFlix_PlayLabel>该节目播放于:</RimFlix_PlayLabel>  -->
   <RimFlix_CustomDescPrefix>自定义目录位于{0}，最后修改于{1}</RimFlix_CustomDescPrefix>  
   <RimFlix_CancelButton>取消</RimFlix_CancelButton>  
   <RimFlix_CancelTooltip>关闭窗口而不创建新节目</RimFlix_CancelTooltip>  
   <RimFlix_FileNotFound>找不到文件</RimFlix_FileNotFound>  
   <RimFlix_DirNotFound>找不到目录:{0}</RimFlix_DirNotFound>  
   <RimFlix_NoShowName>请输入节目名称</RimFlix_NoShowName>  
-  <RimFlix_NoTelevisionType>请至少选择一种电视</RimFlix_NoTelevisionType>  
+<!--  <RimFlix_NoTelevisionType>请至少选择一种电视</RimFlix_NoTelevisionType>  -->
   <RimFlix_LoadError>尝试创建节目时出错。详细信息请参阅调试日志。</RimFlix_LoadError>  
   <RimFlix_Note01>如果你创建了一个带有多张高质量图片的节目，可能需要一段时间来加载纹理。请耐心点。</RimFlix_Note01>  
   

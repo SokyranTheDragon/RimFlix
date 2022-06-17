@@ -46,14 +46,14 @@
   <RimFlix_TimeSeconds>秒</RimFlix_TimeSeconds>
   <RimFlix_TimeSecond>秒</RimFlix_TimeSecond>
   <RimFlix_TimeTicks>チック</RimFlix_TimeTicks>
-  <RimFlix_PlayLabel>番組を再生するTV：</RimFlix_PlayLabel>
+<!--  <RimFlix_PlayLabel>番組を再生するTV：</RimFlix_PlayLabel>-->
   <RimFlix_CustomDescPrefix>カスタム番組{0}の最終更新{1}</RimFlix_CustomDescPrefix>
   <RimFlix_CancelButton>中止</RimFlix_CancelButton>
   <RimFlix_CancelTooltip>新しい番組を作成せずにウィンドウを閉じる</RimFlix_CancelTooltip>
   <RimFlix_FileNotFound>ファイルが見つかりません</RimFlix_FileNotFound>
   <RimFlix_DirNotFound>ディレクトリが見つかりません：{0}</RimFlix_DirNotFound>
   <RimFlix_NoShowName>番組名を入力してください</RimFlix_NoShowName>
-  <RimFlix_NoTelevisionType>最低1種類のテレビを選択してください</RimFlix_NoTelevisionType>
+<!--  <RimFlix_NoTelevisionType>最低1種類のテレビを選択してください</RimFlix_NoTelevisionType>-->
   <RimFlix_LoadError>番組を作成時にエラーが発生しました。詳細はデバッグログを参照してください。</RimFlix_LoadError>
   <RimFlix_Note01>大きな画像を沢山含む番組を作成する場合、画像を読み込むのに時間がかかることがあります。</RimFlix_Note01>
 

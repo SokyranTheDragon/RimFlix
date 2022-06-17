@@ -83,44 +83,44 @@ internal class Dialog_Preview : Window
         GUI.DrawTexture(ultraRect, ultraTex);
 
         // Overlay textures
-        var tubeFrame = new Rect(tubeRect.position, GetSize(tubeVec, RimFlixSettings.TubeScale))
-        {
-            center = tubeRect.center + texDim * RimFlixSettings.TubeOffset
-        };
-        var flatFrame = new Rect(flatRect.position, GetSize(flatVec, RimFlixSettings.FlatScale))
-        {
-            center = flatRect.center + texDim * RimFlixSettings.FlatOffset
-        };
-        var megaFrame = new Rect(megaRect.position, GetSize(megaVec, RimFlixSettings.MegaScale))
-        {
-            center = megaRect.center + texDim * RimFlixSettings.MegaOffset
-        };
-        var ultraFrame = new Rect(ultraRect.position, GetSize(ultraVec, RimFlixSettings.UltraScale))
-        {
-            center = ultraRect.center + texDim * RimFlixSettings.UltraOffset
-        };
-
-        GUI.DrawTexture(tubeFrame, frameTex);
-        GUI.DrawTexture(flatFrame, frameTex);
-        GUI.DrawTexture(megaFrame, frameTex);
-        GUI.DrawTexture(ultraFrame, frameTex);
-        // Draw borders on mouseover
-        if (Mouse.IsOver(tubeRect))
-        {
-            Widgets.DrawBox(tubeFrame);
-        }
-        if (Mouse.IsOver(flatRect))
-        {
-            Widgets.DrawBox(flatFrame);
-        }
-        if (Mouse.IsOver(megaRect))
-        {
-            Widgets.DrawBox(megaFrame);
-        }
-        if (Mouse.IsOver(ultraRect))
-        {
-            Widgets.DrawBox(ultraFrame);
-        }
+        // var tubeFrame = new Rect(tubeRect.position, GetSize(tubeVec, RimFlixSettings.TubeScale))
+        // {
+        //     center = tubeRect.center + texDim * RimFlixSettings.TubeOffset
+        // };
+        // var flatFrame = new Rect(flatRect.position, GetSize(flatVec, RimFlixSettings.FlatScale))
+        // {
+        //     center = flatRect.center + texDim * RimFlixSettings.FlatOffset
+        // };
+        // var megaFrame = new Rect(megaRect.position, GetSize(megaVec, RimFlixSettings.MegaScale))
+        // {
+        //     center = megaRect.center + texDim * RimFlixSettings.MegaOffset
+        // };
+        // var ultraFrame = new Rect(ultraRect.position, GetSize(ultraVec, RimFlixSettings.UltraScale))
+        // {
+        //     center = ultraRect.center + texDim * RimFlixSettings.UltraOffset
+        // };
+        //
+        // GUI.DrawTexture(tubeFrame, frameTex);
+        // GUI.DrawTexture(flatFrame, frameTex);
+        // GUI.DrawTexture(megaFrame, frameTex);
+        // GUI.DrawTexture(ultraFrame, frameTex);
+        // // Draw borders on mouseover
+        // if (Mouse.IsOver(tubeRect))
+        // {
+        //     Widgets.DrawBox(tubeFrame);
+        // }
+        // if (Mouse.IsOver(flatRect))
+        // {
+        //     Widgets.DrawBox(flatFrame);
+        // }
+        // if (Mouse.IsOver(megaRect))
+        // {
+        //     Widgets.DrawBox(megaFrame);
+        // }
+        // if (Mouse.IsOver(ultraRect))
+        // {
+        //     Widgets.DrawBox(ultraFrame);
+        // }
     }
 
     public override void DoWindowContents(Rect rect)
@@ -144,7 +144,7 @@ internal class Dialog_Preview : Window
     {
         var screenSize = Vector2.Scale(parentSize, scale) * texDim;
         var frameSize = new Vector2(frameTex.width, frameTex.height);
-        if (settings.DrawType == DrawType.Fit)
+        if (settings.drawType == DrawType.Fit)
         {
             if (frameSize.x / screenSize.x > frameSize.y / screenSize.y)
             {

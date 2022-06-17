@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -6,44 +7,44 @@ namespace RimFlix;
 
 internal class Dialog_AdjustScreen : Window
 {
-    private float inRectWidth = 840;
-    private float inRectHeight = 680;
-    private float headerHeight = 40;
-    private float texDim;
+    private const float InRectWidth = 840;
+    private const float InRectHeight = 680;
+    private const float HeaderHeight = 40;
+    private readonly float texDim;
 
-    private Texture tubeTex;
-    private Texture flatTex;
-    private Texture megaTex;
-    private Texture ultraTex;
+    private readonly ThingDef def;
+    private readonly Values config;
+    private readonly Dictionary<Rot4, Texture> textures = new();
+    private readonly Vector2 drawSize;
 
-    private Vector3 tubeVec;
-    private Vector3 flatVec;
-    private Vector3 megaVec;
-    private Vector3 ultraVec;
-
-    public Dialog_AdjustScreen()
+    public Dialog_AdjustScreen(ThingDef tvDef)
     {
         doCloseX = true;
         doCloseButton = true;
         forcePause = true;
         absorbInputAroundWindow = true;
 
-        tubeTex = ThingDef.Named("TubeTelevision").graphic.MatSouth.mainTexture;
-        flatTex = ThingDef.Named("FlatscreenTelevision").graphic.MatSouth.mainTexture;
-        megaTex = ThingDef.Named("MegascreenTelevision").graphic.MatSouth.mainTexture;
-        ultraTex = ThingDef.Named("UltrascreenTV").graphic.MatSouth.mainTexture;
+        def = tvDef;
 
-        tubeVec = ThingDef.Named("TubeTelevision").graphicData.drawSize;
-        flatVec = ThingDef.Named("FlatscreenTelevision").graphicData.drawSize;
-        megaVec = ThingDef.Named("MegascreenTelevision").graphicData.drawSize;
-        ultraVec = ThingDef.Named("UltrascreenTV").graphicData.drawSize;
+        if (!RimFlixMod.Settings.defValues.TryGetValue(def.defName, out config))
+            config = RimFlixMod.Settings.defValues[def.defName] = def.GetCompProperties<CompProperties_Screen>()?.defaultValues ?? new Values();
+        else config.RefreshValues(def);
+        
+        drawSize = def.graphicData.drawSize;
 
-        // Get fluid dim (Listing column padding is 17 pixels)
-        var maxVecX = Math.Max(tubeVec.x, Math.Max(flatVec.x, ultraVec.x));
-        texDim = (inRectWidth - 34f) / 3f / maxVecX;
+        if (config.IsRotationSupported(Rot4.South))
+            textures[Rot4.South] = def.graphic.MatSouth.mainTexture;
+        if (config.IsRotationSupported(Rot4.North))
+            textures[Rot4.North] = def.graphic.MatNorth.mainTexture;
+        if (config.IsRotationSupported(Rot4.East))
+            textures[Rot4.East] = def.graphic.MatEast.mainTexture;
+        if (config.IsRotationSupported(Rot4.West))
+            textures[Rot4.West] = def.graphic.MatWest.mainTexture;
+
+        texDim = (InRectWidth - 34f) / 4f / drawSize.x;
     }
 
-    public override Vector2 InitialSize => new(inRectWidth + 36f, inRectHeight + 36f);
+    public override Vector2 InitialSize => new(InRectWidth + 36f, InRectHeight + 36f);
 
     public override void Close(bool doCloseSound = true)
     {
@@ -55,160 +56,86 @@ internal class Dialog_AdjustScreen : Window
     {
         // Avoid Close button overlap
         inRect.yMax -= 50;
-
+        
         // Header title
         Text.Font = GameFont.Medium;
-        var headerRect = inRect.TopPartPixels(headerHeight);
+        var headerRect = inRect.TopPartPixels(HeaderHeight);
         Widgets.Label(inRect, "RimFlix_AdjustSreenTitle".Translate());
-
+        
         // Use inRect for main Listing so screen overlay does not get cut off by header when
         // moved up
         Text.Font = GameFont.Small;
         Text.Anchor = TextAnchor.UpperCenter;
-        var list = new Listing_Standard() { ColumnWidth = (inRect.width - 34) / 4 };
+        var list = new Listing_Standard { ColumnWidth = (inRect.width - 34) / 4 };
         list.Begin(inRect);
-
+        
         list.Gap(headerRect.height);
-        list.Label($"{ThingDef.Named("TubeTelevision").LabelCap}");
+        
+        list.Label(def.LabelCap);
+
+        var count = textures.Count - 1;
+        foreach (var (rot, texture) in textures)
         {
-            // Tube tv and frame
+            ref var offset = ref config.GetOffset(rot);
+            ref var scale = ref config.GetScale(rot);
+
+            if (offset == null || scale == null)
+                continue;
+            
+            var tempOffset = offset.Value;
+            var tempScale = scale.Value;
+
+            list.Label(rot.ToStringHuman());
+            // Texture drawing
             var outRect = list.GetRect(texDim);
-            Vector2 tvSize = tubeVec * texDim;
-            var frameSize = Vector2.Scale(tvSize, RimFlixSettings.TubeScale);
+            var tvSize = drawSize * texDim;
+            var frameSize = Vector2.Scale(tvSize, tempScale);
+
             var tvRect = new Rect(Vector2.zero, tvSize);
             var frameRect = new Rect(Vector2.zero, frameSize);
+
             tvRect.center = outRect.center;
-            frameRect.center = outRect.center + RimFlixSettings.TubeOffset * texDim;
-            Widgets.DrawTextureFitted(tvRect, tubeTex, 1f, tubeVec, new Rect(0f, 0f, 1f, 1f), 0f, null);
+            frameRect.center = outRect.center + tempOffset * texDim;
+
+            Widgets.DrawTextureFitted(tvRect, texture, 1f, drawSize, new Rect(0f, 0f, 1f, 1f));
             Widgets.DrawBoxSolid(frameRect, new Color(1f, 1f, 1f, 0.3f));
             Widgets.DrawBox(frameRect);
-        }
-        list.Gap(8f);
-        list.Label($"{"RimFlix_XScale".Translate()}: {Math.Round(RimFlixSettings.TubeScale.x, 3):F3}");
-        RimFlixSettings.TubeScale.x = list.Slider(RimFlixSettings.TubeScale.x, 0.1f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_YScale".Translate()}: {Math.Round(RimFlixSettings.TubeScale.y, 3):F3}");
-        RimFlixSettings.TubeScale.y = list.Slider(RimFlixSettings.TubeScale.y, 0.1f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_XOffset".Translate()}: {Math.Round(RimFlixSettings.TubeOffset.x, 3):F3}");
-        RimFlixSettings.TubeOffset.x = list.Slider(RimFlixSettings.TubeOffset.x, -1.0f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_YOffset".Translate()}: {Math.Round(RimFlixSettings.TubeOffset.y, 3):F3}");
-        RimFlixSettings.TubeOffset.y = list.Slider(RimFlixSettings.TubeOffset.y, -1.0f, 1.0f);
-        list.Gap(4f);
-        if (list.ButtonText("RimFlix_DefaultScreen".Translate()))
-        {
-            RimFlixSettings.TubeScale = RimFlixSettings.TubeScaleDefault;
-            RimFlixSettings.TubeOffset = RimFlixSettings.TubeOffsetDefault;
-        }
-        list.NewColumn();
 
-        list.Gap(headerRect.height);
-        list.Label($"{ThingDef.Named("FlatscreenTelevision").LabelCap}");
-        {
-            // Flatscreen tv and frame
-            var outRect = list.GetRect(texDim);
-            Vector2 tvSize = flatVec * texDim;
-            var frameSize = Vector2.Scale(tvSize, RimFlixSettings.FlatScale);
-            var tvRect = new Rect(Vector2.zero, tvSize);
-            var frameRect = new Rect(Vector2.zero, frameSize);
-            tvRect.center = outRect.center;
-            frameRect.center = outRect.center + RimFlixSettings.FlatOffset * texDim;
-            Widgets.DrawTextureFitted(tvRect, flatTex, 1f, flatVec, new Rect(0f, 0f, 1f, 1f), 0f, null);
-            Widgets.DrawBoxSolid(frameRect, new Color(1f, 1f, 1f, 0.3f));
-            Widgets.DrawBox(frameRect);
-        }
-        list.Gap(8f);
-        list.Label($"{"RimFlix_XScale".Translate()}: {Math.Round(RimFlixSettings.FlatScale.x, 3):F3}");
-        RimFlixSettings.FlatScale.x = list.Slider(RimFlixSettings.FlatScale.x, 0.1f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_YScale".Translate()}: {Math.Round(RimFlixSettings.FlatScale.y, 3):F3}");
-        RimFlixSettings.FlatScale.y = list.Slider(RimFlixSettings.FlatScale.y, 0.1f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_XOffset".Translate()}: {Math.Round(RimFlixSettings.FlatOffset.x, 3):F3}");
-        RimFlixSettings.FlatOffset.x = list.Slider(RimFlixSettings.FlatOffset.x, -1.0f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_YOffset".Translate()}: {Math.Round(RimFlixSettings.FlatOffset.y, 3):F3}");
-        RimFlixSettings.FlatOffset.y = list.Slider(RimFlixSettings.FlatOffset.y, -1.0f, 1.0f);
-        list.Gap(4f);
-        if (list.ButtonText("RimFlix_DefaultScreen".Translate()))
-        {
-            RimFlixSettings.FlatScale = RimFlixSettings.FlatScaleDefault;
-            RimFlixSettings.FlatOffset = RimFlixSettings.FlatOffsetDefault;
-        }
-        list.NewColumn();
+            // Sliders drawing
+            list.Gap(8f);
+            list.Label($"{"RimFlix_XScale".Translate()}: {Math.Round(tempScale.x, 3):F3}");
+            tempScale.x = list.Slider(tempScale.x, 0.1f, 1.0f);
+            list.Gap(4f);
+            list.Label($"{"RimFlix_YScale".Translate()}: {Math.Round(tempScale.y, 3):F3}");
+            tempScale.y = list.Slider(tempScale.y, 0.1f, 1.0f);
+            list.Gap(4f);
+            list.Label($"{"RimFlix_XOffset".Translate()}: {Math.Round(tempOffset.x, 3):F3}");
+            tempOffset.x = list.Slider(tempOffset.x, -1.0f, 1.0f);
+            list.Gap(4f);
+            list.Label($"{"RimFlix_YOffset".Translate()}: {Math.Round(tempOffset.y, 3):F3}");
+            tempOffset.y = list.Slider(tempOffset.y, -1.0f, 1.0f);
+            list.Gap(4f);
 
-        list.Gap(headerRect.height);
-        list.Label($"{ThingDef.Named("MegascreenTelevision").LabelCap}");
-        {
-            // Megascreen tv and frame
-            var outRect = list.GetRect(texDim);
-            Vector2 tvSize = megaVec * texDim;
-            var frameSize = Vector2.Scale(tvSize, RimFlixSettings.MegaScale);
-            var tvRect = new Rect(Vector2.zero, tvSize);
-            var frameRect = new Rect(Vector2.zero, frameSize * 0.75f);
-            tvRect.center = outRect.center;
-            frameRect.center = outRect.center + RimFlixSettings.MegaOffset * texDim;
-            Widgets.DrawTextureFitted(tvRect, megaTex, 0.75f, megaVec, new Rect(0f, 0f, 1f, 1f), 0f, null);
-            Widgets.DrawBoxSolid(frameRect, new Color(1f, 1f, 1f, 0.25f));
-            Widgets.DrawBox(frameRect);
-        }
-        list.Gap(8f);
-        list.Label($"{"RimFlix_XScale".Translate()}: {Math.Round(RimFlixSettings.MegaScale.x, 3):F3}");
-        RimFlixSettings.MegaScale.x = list.Slider(RimFlixSettings.MegaScale.x, 0.1f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_YScale".Translate()}: {Math.Round(RimFlixSettings.MegaScale.y, 3):F3}");
-        RimFlixSettings.MegaScale.y = list.Slider(RimFlixSettings.MegaScale.y, 0.1f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_XOffset".Translate()}: {Math.Round(RimFlixSettings.MegaOffset.x, 3):F3}");
-        RimFlixSettings.MegaOffset.x = list.Slider(RimFlixSettings.MegaOffset.x, -1.0f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_YOffset".Translate()}: {Math.Round(RimFlixSettings.MegaOffset.y, 3):F3}");
-        RimFlixSettings.MegaOffset.y = list.Slider(RimFlixSettings.MegaOffset.y, -1.0f, 1.0f);
+            if (offset.Value != tempOffset) offset = tempOffset;
+            if (scale.Value != tempScale) scale = tempScale;
+            
+            if (list.ButtonText("RimFlix_DefaultScreen".Translate()))
+            {
+                var props = def.GetCompProperties<CompProperties_Screen>();
+                offset = props.defaultValues.GetOffset(rot);
+                scale = props.defaultValues.GetScale(rot);
 
-        list.Gap(4f);
-        if (list.ButtonText("RimFlix_DefaultScreen".Translate()))
-        {
-            RimFlixSettings.MegaScale = RimFlixSettings.MegaScaleDefault;
-            RimFlixSettings.MegaOffset = RimFlixSettings.MegaOffsetDefault;
-        }
+                offset ??= Vector2.zero;
+                scale ??= Vector2.one;
+            }
 
-        list.NewColumn();
-
-        list.Gap(headerRect.height);
-        list.Label($"{ThingDef.Named("UltrascreenTV").LabelCap}");
-        {
-            // Ultrascreentv and frame
-            var outRect = list.GetRect(texDim);
-            Vector2 tvSize = ultraVec * texDim;
-            var frameSize = Vector2.Scale(tvSize, RimFlixSettings.UltraScale);
-            var tvRect = new Rect(Vector2.zero, tvSize);
-            var frameRect = new Rect(Vector2.zero, frameSize * 0.4f); //.ContractedBy(0.5f);
-            tvRect.center = outRect.center;
-            frameRect.center = outRect.center + RimFlixSettings.UltraOffset * texDim;
-            Widgets.DrawTextureFitted(tvRect, ultraTex, 0.4f, ultraVec, new Rect(0f, 0f, 1f, 1f), 0f, null);
-            Widgets.DrawBoxSolid(frameRect, new Color(1f, 1f, 1f, 0.25f));
-            Widgets.DrawBox(frameRect);
+            if (count != 0)
+            {
+                list.Gap(headerRect.height);
+                list.NewColumn();
+            }
         }
-        list.Gap(8f);
-        list.Label($"{"RimFlix_XScale".Translate()}: {Math.Round(RimFlixSettings.UltraScale.x, 3):F3}");
-        RimFlixSettings.UltraScale.x = list.Slider(RimFlixSettings.UltraScale.x, 0.1f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_YScale".Translate()}: {Math.Round(RimFlixSettings.UltraScale.y, 3):F3}");
-        RimFlixSettings.UltraScale.y = list.Slider(RimFlixSettings.UltraScale.y, 0.1f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_XOffset".Translate()}: {Math.Round(RimFlixSettings.UltraOffset.x, 3):F3}");
-        RimFlixSettings.UltraOffset.x = list.Slider(RimFlixSettings.UltraOffset.x, -1.0f, 1.0f);
-        list.Gap(4f);
-        list.Label($"{"RimFlix_YOffset".Translate()}: {Math.Round(RimFlixSettings.UltraOffset.y, 3):F3}");
-        RimFlixSettings.UltraOffset.y = list.Slider(RimFlixSettings.UltraOffset.y, -1.0f, 1.0f);
-        list.Gap(4f);
-        if (list.ButtonText("RimFlix_DefaultScreen".Translate()))
-        {
-            RimFlixSettings.UltraScale = RimFlixSettings.UltraScaleDefault;
-            RimFlixSettings.UltraOffset = RimFlixSettings.UltraOffsetDefault;
-        }
-
+        
         Text.Anchor = TextAnchor.UpperLeft;
         list.End();
     }

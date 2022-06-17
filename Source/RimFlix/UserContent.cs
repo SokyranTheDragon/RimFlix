@@ -13,8 +13,7 @@ namespace RimFlix;
 [StaticConstructorOnStartup]
 public static class UserContent
 {
-    public static ModContentPack RimFlixMod => LoadedModManager.RunningMods.First(mod => mod.Name == "RimFlix");
-    public static ModContentHolder<Texture2D> RimFlixContent => RimFlixMod.GetContentHolder<Texture2D>();
+    public static ModContentHolder<Texture2D> RimFlixContent => RimFlixMod.ModContent.GetContentHolder<Texture2D>();
 
     static UserContent()
     {
@@ -32,16 +31,15 @@ public static class UserContent
 
     public static void ResolveDisabledShows()
     {
-        var settings = LoadedModManager.GetMod<RimFlixMod>().GetSettings<RimFlixSettings>();
         var shows = DefDatabase<ShowDef>.AllDefs;
-
+        
         foreach (var show in shows)
-            show.disabled = settings.disabledShows?.Contains(show.defName) == true;
+            show.RecheckDisabled();
     }
 
     public static void LoadUserShowDefs()
     {
-        var settings = LoadedModManager.GetMod<RimFlixMod>().GetSettings<RimFlixSettings>();
+        var settings = RimFlixMod.Settings;
         var invalidShows = new List<UserShowDef>();
         var count = 0;
 
@@ -135,7 +133,7 @@ public static class UserContent
     public static void RemoveUserShow(UserShowDef userShow)
     {
         // Remove from settings
-        var settings = LoadedModManager.GetMod<RimFlixMod>().GetSettings<RimFlixSettings>();
+        var settings = RimFlixMod.Settings;
         if (!settings.userShows.Contains(userShow))
         {
             Log.Message($"RimFlix: Could not find show {userShow.defName} : {userShow.label}");

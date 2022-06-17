@@ -1,54 +1,95 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Patch>
-  <Operation Class="PatchOperationReplace">
-    <xpath>Defs/JobDef[defName="WatchTelevision"]/driverClass</xpath>
-    <value>
-      <driverClass>RimFlix.JobDriver_WatchRimFlix</driverClass>
-    </value>
-  </Operation>
+    
+    <Operation Class="PatchOperationReplace">
+        <xpath>Defs/JobDef[defName="WatchTelevision"]/driverClass</xpath>
+        <value>
+            <driverClass>RimFlix.JobDriver_WatchRimFlix</driverClass>
+        </value>
+    </Operation>
 
-  <Operation Class="PatchOperationAdd">
-    <xpath>Defs/ThingDef[defName = 'TubeTelevision' or defName = 'FlatscreenTelevision' or defName = 'MegascreenTelevision']</xpath>
-    <value>
-      <drawerType>RealtimeOnly</drawerType>
-    </value>
-  </Operation>
+    <Operation Class="PatchOperationAdd">
+        <xpath>Defs/ThingDef[defName = 'TubeTelevision' or defName = 'FlatscreenTelevision' or defName = 'MegascreenTelevision' or defName = 'UltrascreenTV']</xpath>
+        <value>
+            <drawerType>RealtimeOnly</drawerType>
+        </value>
+    </Operation>
 
-  <Operation Class="PatchOperationConditional">
-    <xpath>Defs/ThingDef[defName = 'TubeTelevision' or defName = 'FlatscreenTelevision' or defName = 'MegascreenTelevision']/tickerType</xpath>
-    <match Class="PatchOperationReplace">
-      <xpath>Defs/ThingDef[defName = 'TubeTelevision' or defName = 'FlatscreenTelevision' or defName = 'MegascreenTelevision']</xpath>
-      <value>
-        <tickerType>Normal</tickerType>
-      </value>
-    </match>
-    <nomatch Class="PatchOperationAdd">
-      <xpath>Defs/ThingDef[defName = 'TubeTelevision' or defName = 'FlatscreenTelevision' or defName = 'MegascreenTelevision']</xpath>
-      <value>
-        <tickerType>Normal</tickerType>
-      </value>
-    </nomatch>
-  </Operation>
-  
-  <Operation Class="PatchOperationAdd">
-    <xpath>Defs/ThingDef[defName="TubeTelevision"]/comps</xpath>
-    <value>
-      <li Class="RimFlix.CompProperties_Screen"/>
-    </value>
-  </Operation>  
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/ThingDef[defName = 'TubeTelevision' or defName = 'FlatscreenTelevision' or defName = 'MegascreenTelevision' or defName = 'UltrascreenTV']/tickerType</xpath>
+        <match Class="PatchOperationReplace">
+            <xpath>Defs/ThingDef[defName = 'TubeTelevision' or defName = 'FlatscreenTelevision' or defName = 'MegascreenTelevision' or defName = 'UltrascreenTV']</xpath>
+            <value>
+                <tickerType>Normal</tickerType>
+            </value>
+        </match>
+        <nomatch Class="PatchOperationAdd">
+            <xpath>Defs/ThingDef[defName = 'TubeTelevision' or defName = 'FlatscreenTelevision' or defName = 'MegascreenTelevision' or defName = 'UltrascreenTV']</xpath>
+            <value>
+                <tickerType>Normal</tickerType>
+            </value>
+        </nomatch>
+    </Operation>
 
-  <Operation Class="PatchOperationAdd">
-    <xpath>Defs/ThingDef[defName="FlatscreenTelevision"]/comps</xpath>
-    <value>
-      <li Class="RimFlix.CompProperties_Screen"/>
-    </value>
-  </Operation>  
-  
-  <Operation Class="PatchOperationAdd">
-    <xpath>Defs/ThingDef[defName="MegascreenTelevision"]/comps</xpath>
-    <value>
-      <li Class="RimFlix.CompProperties_Screen"/>
-    </value>
-  </Operation>  
-  
+    <Operation Class="PatchOperationAdd">
+        <xpath>Defs/ThingDef[defName="TubeTelevision"]/comps</xpath>
+        <value>
+            <li Class="RimFlix.CompProperties_Screen">
+                <defaultValues>
+                    <scaleSouth>(0.5162, 0.42)</scaleSouth>
+                    <offsetSouth>(-0.0897, 0.1172)</offsetSouth>
+                </defaultValues>
+            </li>
+        </value>
+    </Operation>
+
+    <Operation Class="PatchOperationAdd">
+        <xpath>Defs/ThingDef[defName="FlatscreenTelevision"]/comps</xpath>
+        <value>
+            <li Class="RimFlix.CompProperties_Screen">
+                <defaultValues>
+                    <scaleSouth>(0.87, 0.7179)</scaleSouth>
+                    <offsetSouth>(0, -0.0346)</offsetSouth>
+                </defaultValues>
+            </li>
+        </value>
+    </Operation>
+
+    <Operation Class="PatchOperationAdd">
+        <xpath>Defs/ThingDef[defName="MegascreenTelevision"]/comps</xpath>
+        <value>
+            <li Class="RimFlix.CompProperties_Screen">
+                <defaultValues>
+                    <scaleSouth>(0.9414, 0.8017)</scaleSouth>
+                    <offsetSouth>(0, -0.0207)</offsetSouth>
+                </defaultValues>
+            </li>
+        </value>
+    </Operation>
+
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/ThingDef[defName="UltrascreenTV"]</xpath>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <li Class="PatchOperationAdd">
+                    <xpath>/Defs/RimFlix.ShowDef/televisionDefs/li[text()="FlatscreenTelevision"]/..</xpath>
+                    <value>
+                        <li>UltrascreenTV</li>
+                    </value>
+                </li>
+                <li Class="PatchOperationAdd">
+                    <xpath>Defs/ThingDef[defName="UltrascreenTV"]/comps</xpath>
+                    <value>
+                        <li Class="RimFlix.CompProperties_Screen">
+                            <defaultValues>
+                                <scaleSouth>(0.896, 0.621)</scaleSouth>
+                                <offsetSouth>(0, -0.0425)</offsetSouth>
+                            </defaultValues>
+                        </li>
+                    </value>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+
 </Patch>

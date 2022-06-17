@@ -46,16 +46,19 @@
   <RimFlix_TimeSeconds>seconds</RimFlix_TimeSeconds>
   <RimFlix_TimeSecond>second</RimFlix_TimeSecond>
   <RimFlix_TimeTicks>ticks</RimFlix_TimeTicks>
-  <RimFlix_PlayLabel>Play show on:</RimFlix_PlayLabel>
+<!--  <RimFlix_PlayLabel>Play show on:</RimFlix_PlayLabel>-->
   <RimFlix_CustomDescPrefix>Custom show in {0} last modified {1}</RimFlix_CustomDescPrefix>
   <RimFlix_CancelButton>Cancel</RimFlix_CancelButton>
   <RimFlix_CancelTooltip>Close window without creating new show</RimFlix_CancelTooltip>
   <RimFlix_FileNotFound>File not found</RimFlix_FileNotFound>
   <RimFlix_DirNotFound>Directory not found: {0}</RimFlix_DirNotFound>
   <RimFlix_NoShowName>Please enter a show name</RimFlix_NoShowName>
-  <RimFlix_NoTelevisionType>Please select at least one television type</RimFlix_NoTelevisionType>
+<!--  <RimFlix_NoTelevisionType>Please select at least one television type</RimFlix_NoTelevisionType>-->
   <RimFlix_LoadError>Error trying to create show. See debug log for more info.</RimFlix_LoadError>
   <RimFlix_Note01>If creating a show with many large images, it may take a while to load the textures. Please be patient.</RimFlix_Note01>
+  <RimFlix_ConfigureSupportedTv>Supported television types</RimFlix_ConfigureSupportedTv>
+  <RimFlix_SupportedTvEnabled>{0}: enabled</RimFlix_SupportedTvEnabled>
+  <RimFlix_SupportedTvDisabled>{0}: disabled</RimFlix_SupportedTvDisabled>
 
   <RimFlix_PreviewLabel>Previews for</RimFlix_PreviewLabel>
   

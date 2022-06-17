@@ -1,4 +1,5 @@
-﻿using RimWorld;
+﻿using Multiplayer.API;
+using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
@@ -7,10 +8,10 @@ namespace RimFlix;
 
 public class Dialog_SelectShow : Window
 {
-    private CompScreen screen;
+    private readonly CompScreen screen;
     private Vector2 scrollPosition;
-    private float buttonHeight = 32f;
-    private float buttonMargin = 2f;
+    private const float ButtonHeight = 32f;
+    private const float ButtonMargin = 2f;
 
     public Dialog_SelectShow(CompScreen screen)
     {
@@ -21,13 +22,7 @@ public class Dialog_SelectShow : Window
         absorbInputAroundWindow = true;
     }
 
-    public override Vector2 InitialSize
-    {
-        get
-        {
-            return new Vector2(340f, 580f);
-        }
-    }
+    public override Vector2 InitialSize => new(340f, 580f);
 
     public override void DoWindowContents(Rect inRect)
     {
@@ -36,7 +31,7 @@ public class Dialog_SelectShow : Window
         outRect.yMin += 20f;
         outRect.yMax -= 40f;
         outRect.xMax -= 16f;
-        var viewHeight = (buttonHeight + buttonMargin) * screen.Shows.Count + 80f;
+        var viewHeight = (ButtonHeight + ButtonMargin) * screen.Shows.Count + 80f;
         var viewWidth = viewHeight > outRect.height ? outRect.width - 32f : outRect.width - 16f;
         var viewRect = new Rect(0f, 0f, viewWidth, viewHeight);
         Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect, true);
@@ -45,20 +40,27 @@ public class Dialog_SelectShow : Window
             float y = 0;
             foreach (var show in screen.Shows)
             {
-                var rect = new Rect(16f, y, viewRect.width, buttonHeight);
+                var rect = new Rect(16f, y, viewRect.width, ButtonHeight);
                 TooltipHandler.TipRegion(rect, show.description);
-                if (Widgets.ButtonText(rect, show.label, true, false, true))
+                if (Widgets.ButtonText(rect, show.label, true, false))
                 {
-                    screen.ChangeShow(show);
-                    SoundDefOf.Click.PlayOneShotOnCamera(null);
-                    Close(true);
+                    ChangeShow(screen, show);
+                    Close();
                 }
-                y += (buttonHeight + buttonMargin);
+
+                y += (ButtonHeight + ButtonMargin);
             }
         }
         finally
         {
             Widgets.EndScrollView();
         }
+    }
+
+    [SyncMethod]
+    private static void ChangeShow(CompScreen screen, ShowDef show)
+    {
+        screen.ChangeShow(show);
+        SoundDefOf.Click.PlayOneShotOnCamera();
     }
 }

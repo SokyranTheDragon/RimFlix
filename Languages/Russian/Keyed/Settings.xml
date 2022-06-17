@@ -46,14 +46,14 @@
   <RimFlix_TimeSeconds>секунд</RimFlix_TimeSeconds>
   <RimFlix_TimeSecond>секунд</RimFlix_TimeSecond>
   <RimFlix_TimeTicks>тиков</RimFlix_TimeTicks>
-  <RimFlix_PlayLabel>Играть шоу сейчас:</RimFlix_PlayLabel>
+<!--  <RimFlix_PlayLabel>Играть шоу сейчас:</RimFlix_PlayLabel>-->
   <RimFlix_CustomDescPrefix>Пользовательское шоу в {0} последний раз изменено {1}</RimFlix_CustomDescPrefix>
   <RimFlix_CancelButton>Отменить</RimFlix_CancelButton>
   <RimFlix_CancelTooltip>Закрыть окно не создавая шоу</RimFlix_CancelTooltip>
   <RimFlix_FileNotFound>Файл не найден</RimFlix_FileNotFound>
   <RimFlix_DirNotFound>Директория не найдена: {0}</RimFlix_DirNotFound>
   <RimFlix_NoShowName>Пожалуйста, введите название шоу</RimFlix_NoShowName>
-  <RimFlix_NoTelevisionType>Пожалуйста, выберите хотя бы один телевизор</RimFlix_NoTelevisionType>
+<!--  <RimFlix_NoTelevisionType>Пожалуйста, выберите хотя бы один телевизор</RimFlix_NoTelevisionType>-->
   <RimFlix_LoadError>Ошибка при создании шоу. Больше информации в дебаге.</RimFlix_LoadError>
   <RimFlix_Note01>При создании шоу с большими изображениями, может уйти некоторое время, пожалуйста, подождите.</RimFlix_Note01>
 

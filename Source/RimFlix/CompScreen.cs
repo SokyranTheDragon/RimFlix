@@ -11,6 +11,7 @@ public class CompScreen : ThingComp
 {
     // RimFlix settings
     private RimFlixSettings settings;
+    private Values values;
 
     private double screenUpdateTime;
     private double showUpdateTime;
@@ -107,15 +108,16 @@ public class CompScreen : ThingComp
         settings = RimFlixMod.Settings;
         compPowerTrader = parent.GetComp<CompPowerTrader>();
 
-        if (!settings.defValues.ContainsKey(parent.def)) 
-            settings.defValues[parent.def] = Props.defaultValues ?? new Values();
+        if (!settings.defValues.TryGetValue(parent.def.defName, out values))
+            settings.defValues[parent.def.defName] = Props.defaultValues ?? new Values();
+        else values.RefreshValues(parent.def);
 
         if (compPowerTrader != null)
         {
             powerOutputOn = -1f * compPowerTrader.Props.basePowerConsumption * settings.powerConsumptionOn / 100f;
             powerOutputOff = -1f * compPowerTrader.Props.basePowerConsumption * settings.powerConsumptionOff / 100f;
         }
-        
+
         screenUpdateTime = 0;
         showUpdateTime = 0;
     }
@@ -150,10 +152,7 @@ public class CompScreen : ThingComp
 
     private Vector2 GetSize(Graphic frame)
     {
-        if (!RimFlixMod.Settings.defValues.TryGetValue(parent.def, out var values))
-            RimFlixMod.Settings.defValues[parent.def] = values = Props.defaultValues ?? new Values();
-        
-        var screenSize = Vector2.Scale(values.Scale(parent.Rotation) ?? Vector2.zero, parent.Graphic.drawSize);
+        var screenSize = Vector2.Scale(values.GetScale(parent.Rotation) ?? Vector2.one, parent.Graphic.drawSize);
         var frameSize = new Vector2(frame.MatSingle.mainTexture.width, frame.MatSingle.mainTexture.height);
         var isWide = (frameSize.x / screenSize.x > frameSize.y / screenSize.y);
 
@@ -162,12 +161,12 @@ public class CompScreen : ThingComp
             // Stretch: resize image to fill frame, ignoring aspect ratio
             DrawType.Stretch => screenSize,
             // Fit: resize image to fit within frame while maintaining aspect ratio
-            DrawType.Fit => isWide 
-                ? new Vector2(screenSize.x, screenSize.x * frameSize.y / frameSize.x) 
+            DrawType.Fit => isWide
+                ? new Vector2(screenSize.x, screenSize.x * frameSize.y / frameSize.x)
                 : new Vector2(screenSize.y * frameSize.x / frameSize.y, screenSize.y),
             // Fill: resize image to fill frame while maintaining aspect ratio (can be larger than parent)
-            DrawType.Fill => isWide 
-                ? new Vector2(screenSize.y * frameSize.x / frameSize.y, screenSize.y) 
+            DrawType.Fill => isWide
+                ? new Vector2(screenSize.y * frameSize.x / frameSize.y, screenSize.y)
                 : new Vector2(screenSize.x, frameSize.y / frameSize.x * screenSize.x),
             _ => screenSize
         };
@@ -177,12 +176,9 @@ public class CompScreen : ThingComp
     {
         // Altitude layers are 0.046875f For more info refer to `Verse.Altitudes` and `Verse.SectionLayer`
         const float y = 0.0234375f;
-        
-        if (!RimFlixMod.Settings.defValues.TryGetValue(parent.def, out var values))
-            RimFlixMod.Settings.defValues[parent.def] = values = Props.defaultValues ?? new Values();
 
-        var offset = values.Offset(parent.Rotation) ?? default;
-        return new Vector3(offset.x, y, offset.y);
+        var offset = values.GetOffset(parent.Rotation) ?? default;
+        return new Vector3(offset.x, y, -offset.y);
     }
 
     private bool IsPlaying()

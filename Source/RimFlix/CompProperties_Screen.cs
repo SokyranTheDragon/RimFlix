@@ -16,5 +16,10 @@ public class CompProperties_Screen : CompProperties
 
         if (defaultValues == null)
             yield return $"{nameof(defaultValues)} cannot be null!";
+        else if (!defaultValues.IsRotationSupported(Rot4.North) &&
+                 !defaultValues.IsRotationSupported(Rot4.South) &&
+                 !defaultValues.IsRotationSupported(Rot4.East) &&
+                 !defaultValues.IsRotationSupported(Rot4.West))
+            yield return $"{nameof(defaultValues)} does not support for any direction!";
     }
 }
