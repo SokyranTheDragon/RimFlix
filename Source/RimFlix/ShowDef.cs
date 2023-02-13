@@ -35,7 +35,7 @@ public class ShowDef : Def
         RimFlixMod.Settings.showStatus.Add(status);
     }
 
-    protected void FillDefaults(in ShowStatus status)
+    protected static void FillDefaults(in ShowStatus status)
     {
         foreach (var def in DefDatabase<ThingDef>.AllDefs)
         {
