@@ -10,8 +10,7 @@ namespace RimFlix;
 public class CompScreen : ThingComp
 {
     // RimFlix settings
-    private RimFlixSettings settings;
-    private Values values;
+    private Values values = new();
 
     private double screenUpdateTime;
     private double showUpdateTime;
@@ -105,7 +104,7 @@ public class CompScreen : ThingComp
     {
         base.Initialize(props);
 
-        settings = RimFlixMod.Settings;
+        var settings = RimFlixMod.Settings;
         compPowerTrader = parent.GetComp<CompPowerTrader>();
 
         if (!settings.defValues.TryGetValue(parent.def.defName, out values))
@@ -156,7 +155,7 @@ public class CompScreen : ThingComp
         var frameSize = new Vector2(frame.MatSingle.mainTexture.width, frame.MatSingle.mainTexture.height);
         var isWide = (frameSize.x / screenSize.x > frameSize.y / screenSize.y);
 
-        return settings.drawType switch
+        return RimFlixMod.Settings.drawType switch
         {
             // Stretch: resize image to fill frame, ignoring aspect ratio
             DrawType.Stretch => screenSize,
@@ -188,7 +187,7 @@ public class CompScreen : ThingComp
             return false;
 
         // No pawn watching, and PlayAlways is false
-        if (SleepTimer == 0 && !settings.playAlways)
+        if (SleepTimer == 0 && !RimFlixMod.Settings.playAlways)
             return false;
 
         // No shows available, or show has no frames
@@ -214,11 +213,10 @@ public class CompScreen : ThingComp
 
     public void ChangeShow(ShowDef s) => ChangeShow(Shows.IndexOf(s));
 
-    // Process show and frame ticks Should only be called when tv is playing (show exists and
-    // has frames)
+    // Process show and frame ticks Should only be called when tv is playing (show exists and has frames)
     private void RunShow()
     {
-        if (SleepTimer > 0 && allowPawn && ++showTicks > settings.secondsBetweenShows.SecondsToTicks())
+        if (SleepTimer > 0 && allowPawn && ++showTicks > RimFlixMod.Settings.secondsBetweenShows.SecondsToTicks())
         {
             // Pawn changed show
             showIndex = (showIndex + 1) % Shows.Count;
