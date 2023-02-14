@@ -108,16 +108,19 @@ internal class Dialog_AddShow : Window
             currentUserShow = currentShow as UserShowDef;
 
             status = RimFlixMod.Settings.showStatus.FirstOrDefault(x => x.showDefName == currentShow.defName);
+            status.FillDefaults();
         }
         else
         {
-            var settings = RimFlixMod.Settings;
             showName = "RimFlix_DefaultName".Translate();
-            currentPath = Directory.Exists(settings.lastPath) ? settings.lastPath : settings.defaultPath;
             timeValue = 10;
 
             status = new ShowStatus();
+            status.FillDefaults();
         }
+
+        var settings = RimFlixMod.Settings;
+        currentPath = Directory.Exists(settings.lastPath) ? settings.lastPath : settings.defaultPath;
     }
 
     public override Vector2 InitialSize => new(736f, 536f);
@@ -150,7 +153,7 @@ internal class Dialog_AddShow : Window
         if (Widgets.ButtonImage(refreshRect, refreshTex, Color.gray, GenUI.SubtleMouseoverColor))
         {
             dirInfoDirty = true;
-            soundAppear.PlayOneShotOnCamera(null);
+            soundAppear.PlayOneShotOnCamera();
         }
 
         // Using Color.gray for button changes default GUI color, so we need to change it back
@@ -177,17 +180,13 @@ internal class Dialog_AddShow : Window
             {
                 currentPath = drive;
                 dirInfoDirty = true;
-                soundAmbient.PlayOneShotOnCamera(null);
+                soundAmbient.PlayOneShotOnCamera();
             }
 
             if (drive == Path.GetPathRoot(currentPath))
-            {
                 Widgets.DrawHighlightSelected(rectButton);
-            }
             else
-            {
                 Widgets.DrawHighlightIfMouseover(rectButton);
-            }
 
             index++;
         }
@@ -398,7 +397,7 @@ internal class Dialog_AddShow : Window
         {
             y = y
         };
-        if (Widgets.ButtonText(buttonRect, "RimFlix_ConfigureSupportedTv".Translate()))
+        if (Widgets.ButtonText(buttonRect, "RimFlix_ConfigureSupportedTv".Translate(), active: status.status.Count > 0))
         {
             var options = status.status
                 .Select(kvp => (def: DefDatabase<ThingDef>.GetNamedSilentFail(kvp.Key), status: kvp.Value))
