@@ -7,8 +7,8 @@ namespace RimFlix;
 
 internal class Dialog_AdjustScreen : Window
 {
-    private const float InRectWidth = 840;
-    private const float InRectHeight = 680;
+    private readonly float inRectWidth;
+    private readonly float inRectHeight;
     private const float HeaderHeight = 40;
     private readonly float texDim;
 
@@ -16,6 +16,7 @@ internal class Dialog_AdjustScreen : Window
     private readonly Values config;
     private readonly Dictionary<Rot4, Texture> textures = new();
     private readonly Vector2 drawSize;
+    private readonly int count;
 
     public Dialog_AdjustScreen(ThingDef tvDef)
     {
@@ -41,10 +42,17 @@ internal class Dialog_AdjustScreen : Window
         if (config.IsRotationSupported(Rot4.West))
             textures[Rot4.West] = def.graphic.MatWest.mainTexture;
 
-        texDim = (InRectWidth - 34f) / 4f / drawSize.x;
+        const float tempDim = 810F / 4f;
+        texDim = tempDim / drawSize.x;
+        count = textures.Count;
+        if (count <= 0)
+            count = 1;
+
+        inRectWidth = (tempDim + 36f) * count + 36f;
+        inRectHeight = 700f + drawSize.y;
     }
 
-    public override Vector2 InitialSize => new(InRectWidth + 36f, InRectHeight + 36f);
+    public override Vector2 InitialSize => new(inRectWidth, inRectHeight);
 
     public override void Close(bool doCloseSound = true)
     {
@@ -66,14 +74,13 @@ internal class Dialog_AdjustScreen : Window
         // moved up
         Text.Font = GameFont.Small;
         Text.Anchor = TextAnchor.UpperCenter;
-        var list = new Listing_Standard { ColumnWidth = (inRect.width - 34) / 4 };
+        var list = new Listing_Standard { ColumnWidth = (inRect.width - 50) / count };
+        inRect.yMin += headerRect.height + 25;
         list.Begin(inRect);
-        
-        list.Gap(headerRect.height);
-        
-        list.Label(def.LabelCap);
 
-        var count = textures.Count - 1;
+        var gap = list.Label(def.LabelCap).height;
+
+        var current = textures.Count - 1;
         foreach (var (rot, texture) in textures)
         {
             ref var offset = ref config.GetOffset(rot);
@@ -87,13 +94,13 @@ internal class Dialog_AdjustScreen : Window
 
             list.Label(rot.ToStringHuman());
             // Texture drawing
-            var outRect = list.GetRect(texDim);
+            var outRect = list.GetRect(drawSize.x * texDim);
             var tvSize = drawSize * texDim;
             var frameSize = Vector2.Scale(tvSize, tempScale);
 
             var tvRect = new Rect(Vector2.zero, tvSize);
             var frameRect = new Rect(Vector2.zero, frameSize);
-
+            
             tvRect.center = outRect.center;
             frameRect.center = outRect.center + tempOffset * texDim;
 
@@ -129,11 +136,13 @@ internal class Dialog_AdjustScreen : Window
                 scale ??= Vector2.one;
             }
 
-            if (count != 0)
+            if (current > 0)
             {
-                list.Gap(headerRect.height);
                 list.NewColumn();
+                list.Gap(gap);
             }
+
+            current--;
         }
         
         Text.Anchor = TextAnchor.UpperLeft;
