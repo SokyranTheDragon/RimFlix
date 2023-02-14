@@ -19,4 +19,16 @@ public class ShowStatus : IExposable
         Scribe_Values.Look(ref showDefName, "showDefName");
         Scribe_Collections.Look(ref status, "status", LookMode.Value, LookMode.Value);
     }
+
+    public void FillDefaults()
+    {
+        foreach (var def in DefDatabase<ThingDef>.AllDefs)
+        {
+            if (def.GetCompProperties<CompProperties_Screen>() == null)
+                continue;
+            if (status.ContainsKey(def.defName))
+                continue;
+            status[def.defName] = false;
+        }
+    }
 }
