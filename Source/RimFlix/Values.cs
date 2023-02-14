@@ -29,7 +29,7 @@ public class Values : IExposable
         Scribe_Values.Look(ref drawType, "drawType");
     }
 
-    protected void SaveAccurateVector(ref Vector2? vec, string label)
+    protected static void SaveAccurateVector(ref Vector2? vec, string label)
     {
         var x = vec?.x;
         var y = vec?.y;
