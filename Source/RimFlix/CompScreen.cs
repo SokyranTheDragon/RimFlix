@@ -1,5 +1,6 @@
 ﻿using RimWorld;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using UnityEngine;
 using Verse;
@@ -27,6 +28,11 @@ public class CompScreen : ThingComp
 
     private Graphic frameGraphic;
 
+    private Vector3 currentOffset;
+    private Vector2? currentSize;
+    private bool currentRotationSupported;
+    private Rot4 currentRotation = Rot4.Invalid;
+
     private Graphic FrameGraphic
     {
         get
@@ -37,8 +43,9 @@ public class CompScreen : ThingComp
             if (frameDirty || screenUpdateTime < RimFlixSettings.screenUpdateTime)
             {
                 var graphic = Show.frames[frameIndex % Show.frames.Count].Graphic;
-                var frameSize = GetSize(graphic);
-                frameGraphic = graphic.GetCopy(frameSize, null);
+                if (currentSize == null)
+                    ResetSize(graphic);
+                frameGraphic = graphic.GetCopy(currentSize.Value, null);
                 screenUpdateTime = RimFlixSettings.screenUpdateTime;
                 frameDirty = false;
             }
@@ -105,20 +112,30 @@ public class CompScreen : ThingComp
         base.Initialize(props);
 
         var settings = RimFlixMod.Settings;
-        compPowerTrader = parent.GetComp<CompPowerTrader>();
 
         if (!settings.defValues.TryGetValue(parent.def.defName, out values))
             settings.defValues[parent.def.defName] = Props.defaultValues ?? new Values();
         else values.RefreshValues(parent.def);
 
+        screenUpdateTime = 0;
+        showUpdateTime = 0;
+    }
+
+    public override void PostSpawnSetup(bool respawningAfterLoad)
+    {
+        base.PostSpawnSetup(respawningAfterLoad);
+
+        compPowerTrader = parent.GetComp<CompPowerTrader>();
         if (compPowerTrader != null)
         {
+            var settings = RimFlixMod.Settings;
             powerOutputOn = -1f * compPowerTrader.Props.basePowerConsumption * settings.powerConsumptionOn / 100f;
             powerOutputOff = -1f * compPowerTrader.Props.basePowerConsumption * settings.powerConsumptionOff / 100f;
         }
 
-        screenUpdateTime = 0;
-        showUpdateTime = 0;
+        ResetOffset();
+        ResetCurrentRotationSupported();
+        currentRotation = parent.Rotation;
     }
 
     /*private void ResolveShow()
@@ -149,13 +166,14 @@ public class CompScreen : ThingComp
         }
     }
 
-    private Vector2 GetSize(Graphic frame)
+    [MemberNotNull(nameof(currentSize))]
+    private void ResetSize(Graphic frame)
     {
         var screenSize = Vector2.Scale(values.GetScale(parent.Rotation) ?? Vector2.one, parent.Graphic.drawSize);
         var frameSize = new Vector2(frame.MatSingle.mainTexture.width, frame.MatSingle.mainTexture.height);
         var isWide = (frameSize.x / screenSize.x > frameSize.y / screenSize.y);
 
-        return RimFlixMod.Settings.drawType switch
+        currentSize = RimFlixMod.Settings.drawType switch
         {
             // Stretch: resize image to fill frame, ignoring aspect ratio
             DrawType.Stretch => screenSize,
@@ -171,31 +189,36 @@ public class CompScreen : ThingComp
         };
     }
 
-    private Vector3 GetOffset()
+    [MemberNotNull(nameof(currentOffset))]
+    private void ResetOffset()
     {
         // Altitude layers are 0.046875f For more info refer to `Verse.Altitudes` and `Verse.SectionLayer`
         const float y = 0.0234375f;
 
         var offset = values.GetOffset(parent.Rotation) ?? default;
-        return new Vector3(offset.x, y, -offset.y);
+        currentOffset = new Vector3(offset.x, y, -offset.y);
     }
+
+    [MemberNotNull(nameof(currentRotationSupported))]
+    private void ResetCurrentRotationSupported() => currentRotationSupported = Props.defaultValues.IsRotationSupported(parent.Rotation);
 
     private bool IsPlaying()
     {
         // Is not supported rotation
-        if (!Props.defaultValues.IsRotationSupported(parent.Rotation))
+        if (!currentRotationSupported)
             return false;
 
         // No pawn watching, and PlayAlways is false
         if (SleepTimer == 0 && !RimFlixMod.Settings.playAlways)
             return false;
 
-        // No shows available, or show has no frames
-        if ((Show?.frames?.Count ?? 0) == 0)
+        // Not powered
+        if (compPowerTrader is { PowerOn: false })
             return false;
 
-        // Not powered
-        if (!compPowerTrader.PowerOn)
+        // No shows available, or show has no frames
+        var tempShow = Show;
+        if (tempShow?.frames == null || tempShow.frames.Count == 0)
             return false;
 
         return true;
@@ -238,7 +261,7 @@ public class CompScreen : ThingComp
 
         if (IsPlaying())
         {
-            var drawPos = parent.DrawPos + GetOffset();
+            var drawPos = parent.DrawPos + currentOffset;
             FrameGraphic.Draw(drawPos, parent.Rotation.Opposite, parent);
         }
 
@@ -250,6 +273,14 @@ public class CompScreen : ThingComp
     {
         if (IsPlaying())
         {
+            if (currentRotation != parent.Rotation)
+            {
+                ResetOffset();
+                currentSize = null;
+                frameDirty = true;
+                currentRotation = parent.Rotation;
+            }
+
             RunShow();
             compPowerTrader.PowerOutput = powerOutputOn;
         }
